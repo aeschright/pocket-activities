@@ -45,23 +45,22 @@ const getSunriseSunsetTool = ai.defineTool(
 );
 
 
-const getSunriseSunsetPrompt = ai.definePrompt({
-  name: 'getSunriseSunsetPrompt',
-  input: {schema: GetSunriseSunsetInputSchema},
-  output: {schema: GetSunriseSunsetOutputSchema},
-  tools: [getSunriseSunsetTool],
-  prompt: `You are an astronomy assistant. The user has provided a latitude and longitude.
-You MUST call the getSunriseSunsetTool with the provided latitude and longitude to get the sunrise and sunset times.
-Do not make up data.
-Latitude: {{{latitude}}}
-Longitude: {{{longitude}}}`,
-});
-
+const getSunriseSunsetFlow = ai.defineFlow(
+  {
+    name: 'getSunriseSunsetFlow',
+    inputSchema: GetSunriseSunsetInputSchema,
+    outputSchema: GetSunriseSunsetOutputSchema,
+  },
+  async (input) => {
+    // Directly call the tool to avoid ambiguity with the LLM.
+    return await getSunriseSunsetTool(input);
+  }
+);
 
 export async function getSunriseSunset(input: GetSunriseSunsetInput): Promise<GetSunriseSunsetOutput> {
-    const {output} = await getSunriseSunsetPrompt(input);
-    if (!output) {
+    const result = await getSunriseSunsetFlow(input);
+    if (!result) {
         throw new Error('Could not get sunrise/sunset data.');
     }
-    return output;
+    return result;
 }
