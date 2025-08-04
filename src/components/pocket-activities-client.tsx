@@ -42,7 +42,7 @@ export function PocketActivitiesClient() {
   const [locationError, setLocationError] = useState<string | null>(null);
 
   const [selectedCustomActivityId, setSelectedCustomActivityId] = useState<string | null>(null);
-  const [selectedSuggestedActivityId, setSelectedSuggestedActivityId] = useState<string | null>(null);
+  const [selectedSuggestedActivity, setSelectedSuggestedActivity] = useState<Activity | null>(null);
 
   const [timeToSunset, setTimeToSunset] = useState<string | null>(null);
 
@@ -56,10 +56,11 @@ export function PocketActivitiesClient() {
   }, []);
 
   const [isPending, startTransition] = useTransition();
+  const [isRefetchingSuggestion, setIsRefetchingSuggestion] = useTransition();
   
   const handleResetSelections = () => {
     setSelectedCustomActivityId(null);
-    setSelectedSuggestedActivityId(null);
+    setSelectedSuggestedActivity(null);
     setSuggestions([]);
     setHasSearched(false);
   };
@@ -114,12 +115,13 @@ export function PocketActivitiesClient() {
 
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
-      setCoords({ latitude, longitude });
+      const newCoords = { latitude, longitude };
+      setCoords(newCoords);
       
       try {
         const [weatherResult, sunriseSunsetResult] = await Promise.all([
-            getWeatherAction({ latitude, longitude }),
-            getSunriseSunsetAction({ latitude, longitude })
+            getWeatherAction(newCoords),
+            getSunriseSunsetAction(newCoords)
         ]);
 
         if (weatherResult && 'error' in weatherResult) {
@@ -178,28 +180,30 @@ export function PocketActivitiesClient() {
     }
   };
 
-  const handleSuggestedActivitySelect = (id: string) => {
-    setSelectedSuggestedActivityId(id);
+  const handleSuggestedActivitySelect = (activity: Activity) => {
+    setSelectedSuggestedActivity(activity);
     setSelectedCustomActivityId(null); // Clear custom selection
   };
 
   const handleCustomActivitySelect = (id: string) => {
-    setSelectedCustomActivityId(id);
-    setSelectedSuggestedActivityId(null); // Clear suggested selection
+    const activity = customActivities.find(act => act.id === id);
+    if(activity) {
+      setSelectedSuggestedActivity(null); // Clear suggested selection
+      setSelectedCustomActivityId(id);
+    }
   }
 
   const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
   
   const selectedActivity = useMemo(() => {
-    if (selectedSuggestedActivityId) {
-        return suggestions.find(act => act.id === selectedSuggestedActivityId) || null;
+    if (selectedSuggestedActivity) {
+      return selectedSuggestedActivity;
     }
     if (selectedCustomActivityId) {
         return customActivities.find(act => act.id === selectedCustomActivityId) || null;
     }
     return null;
-  }, [selectedSuggestedActivityId, selectedCustomActivityId, suggestions, customActivities]);
-
+  }, [selectedSuggestedActivity, selectedCustomActivityId, customActivities]);
   
   const selectedActivityFitsCriteria = useMemo(() => {
     if (!selectedActivity) return false;
@@ -209,11 +213,52 @@ export function PocketActivitiesClient() {
   }, [selectedActivity, timeInMinutes, daylightNeeded]);
 
   useEffect(() => {
-    if (selectedActivity?.daylightNeeded && !weather && !sunriseSunset) {
+    if (selectedActivity?.daylightNeeded && !weather && !isFetchingWeather && !locationError) {
       getLocationAndFetchData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedActivity]);
+
+
+  useEffect(() => {
+     // If we have a selected activity and new weather data becomes available,
+     // re-fetch the suggestion to get an updated weather tip.
+    if (selectedActivity && !selectedActivity.isCustom && weather && !isFetchingWeather) {
+      const originalSuggestion = suggestions.find(s => s.id === selectedActivity.id);
+      
+      // Only refetch if the weather tip could change.
+      if (originalSuggestion && !originalSuggestion.weatherTipLong) {
+        setIsRefetchingSuggestion(async () => {
+          const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
+          let minutesToSunset: number | undefined = undefined;
+          if (sunriseSunset?.sunset) {
+            minutesToSunset = differenceInMinutes(new Date(sunriseSunset.sunset), new Date());
+          }
+
+          const weatherPayload = {
+            uvIndex: weather.uvIndex,
+            precipitationProbability: weather.precipitationProbability || 0,
+          };
+          
+          // Let's ask for just one suggestion to update the current one
+          const result = await getSuggestionsAction({
+            availableTimeMinutes: timeInMinutes,
+            daylightNeeded: selectedActivity.daylightNeeded,
+            minutesToSunset: minutesToSunset,
+            weather: weatherPayload,
+            coords: coords ?? undefined,
+          });
+
+          // Find a similar activity and update our selected one
+          const updatedSuggestion = result.find(r => r.name === selectedActivity.name);
+          if(updatedSuggestion) {
+            setSelectedSuggestedActivity(updatedSuggestion);
+          }
+        });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weather, isFetchingWeather]);
 
   useEffect(() => {
     if (sunriseSunset?.sunset) {
@@ -422,7 +467,14 @@ export function PocketActivitiesClient() {
                 </TooltipProvider>
              )}
              
-             {selectedActivity.daylightNeeded && !selectedActivity.weatherTipLong && locationError && (
+             {selectedActivity.daylightNeeded && !selectedActivity.weatherTipLong && (isFetchingWeather || isRefetchingSuggestion) && (
+                <div className="flex items-center text-sm font-medium text-muted-foreground p-3 mt-4">
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <span>Fetching weather tip...</span>
+                </div>
+             )}
+
+             {selectedActivity.daylightNeeded && !selectedActivity.weatherTipLong && !isFetchingWeather && !isRefetchingSuggestion && (
                  <div className="flex items-center text-sm font-medium text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-md p-3 mt-4">
                     <AlertTriangle className="mr-2 h-5 w-5" />
                     <span>Click "Get My Weather" or grant location access to see relevant weather tips.</span>
@@ -471,7 +523,7 @@ export function PocketActivitiesClient() {
                     <ActivityCard 
                     key={activity.id} 
                     activity={activity} 
-                    onClick={() => handleSuggestedActivitySelect(activity.id)}
+                    onClick={() => handleSuggestedActivitySelect(activity)}
                     />
                 ))
                 ) : hasSearched ? (
