@@ -23,7 +23,7 @@ export function ActivityCard({ activity, onDelete, onEdit, onClick }: ActivityCa
         )}
         onClick={() => onClick?.(activity.id)}
       >
-        <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <div className="absolute bottom-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
           {activity.isCustom && onEdit && (
             <Tooltip>
               <TooltipTrigger asChild>
