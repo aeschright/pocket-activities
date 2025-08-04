@@ -69,7 +69,7 @@ You can suggest activities like a day hike (4 hours), gardening (1 hour), or ske
 {{/if}}
 
 {{#if weather}}
-For any outdoor activities suggested, provide a helpful weather-related tip.
+For any outdoor activities suggested, provide a helpful weather-related tip. Activities that require daylight are considered outdoor activities and MUST have a weather tip.
 - If the UV index is 3 or higher, the tip should be to "Wear sunscreen."
 - If the precipitation probability is 20% or higher, the tip should be to "Bring a raincoat."
 - If both conditions are met, you can choose the most relevant tip.
