@@ -23,9 +23,14 @@ export type GenerateActivitySuggestionsInput = z.infer<
   typeof GenerateActivitySuggestionsInputSchema
 >;
 
+const SuggestionSchema = z.object({
+  activity: z.string().describe('The suggested activity.'),
+  duration: z.number().describe('The estimated duration of the activity in minutes.'),
+});
+
 const GenerateActivitySuggestionsOutputSchema = z.object({
   suggestions: z
-    .array(z.string())
+    .array(SuggestionSchema)
     .describe('A list of activity suggestions.'),
 });
 export type GenerateActivitySuggestionsOutput = z.infer<
@@ -44,7 +49,9 @@ const generateActivitySuggestionsPrompt = ai.definePrompt({
   output: {schema: GenerateActivitySuggestionsOutputSchema},
   prompt: `You are an activity suggestion expert. A user has {{availableTimeMinutes}} minutes free and {{#if daylightNeeded}}needs daylight{{else}}does not need daylight{{/if}}. Suggest some activities they can do.
 
-Return a JSON array of strings. Each string is a suggestion of an activity to do. Suggest between 3 and 5 activities.`,
+Each suggestion must have a duration that is less than or equal to the available time.
+Return a JSON object with a 'suggestions' key, which is an array of objects. Each object should have 'activity' and 'duration' keys.
+Suggest between 3 and 5 activities.`,
 });
 
 const generateActivitySuggestionsFlow = ai.defineFlow(

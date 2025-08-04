@@ -10,10 +10,10 @@ export async function getSuggestionsAction(input: GenerateActivitySuggestionsInp
     if (!result || !result.suggestions) {
       return [];
     }
-    const suggestions: Activity[] = result.suggestions.map((suggestion: string) => ({
-      id: `ai-${suggestion.toLowerCase().replace(/\s+/g, '-')}-${Math.random()}`,
-      name: suggestion,
-      duration: input.availableTimeMinutes,
+    const suggestions: Activity[] = result.suggestions.map((suggestion) => ({
+      id: `ai-${suggestion.activity.toLowerCase().replace(/\s+/g, '-')}-${Math.random()}`,
+      name: suggestion.activity,
+      duration: suggestion.duration,
       isCustom: false,
       // We don't know if the AI will respect this, so we have to trust it.
       // For more complex scenarios, we might want to have the AI return structured data.
