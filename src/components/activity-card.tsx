@@ -1,3 +1,4 @@
+
 import type { Activity } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,18 +23,20 @@ export function ActivityCard({ activity, onDelete, onEdit, onClick }: ActivityCa
         )}
         onClick={() => onClick?.(activity.id)}
       >
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
           <CardTitle className="text-lg font-headline pr-16">{activity.name}</CardTitle>
-           {activity.isCustom && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <User className="h-5 w-5 text-muted-foreground shrink-0" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Custom Activity</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
+           <div className="flex items-center space-x-1">
+             {activity.isCustom && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <User className="h-5 w-5 text-muted-foreground shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Custom Activity</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2 flex-wrap gap-y-1">
