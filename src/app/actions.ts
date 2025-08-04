@@ -30,9 +30,9 @@ export async function getWeatherAction(input: GetWeatherInput): Promise<GetWeath
     try {
         const result = await getWeather(input);
         return result;
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error getting weather:', error);
-        return { error: 'Failed to get weather data.' };
+        return { error: error.message || 'Failed to get weather data.' };
     }
 }
 
@@ -40,8 +40,8 @@ export async function getSunriseSunsetAction(input: GetSunriseSunsetInput): Prom
     try {
         const result = await getSunriseSunset(input);
         return result;
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error getting sunrise/sunset data:', error);
-        return { error: 'Failed to get sunrise/sunset data.' };
+        return { error: error.message || 'Failed to get sunrise/sunset data.' };
     }
 }
