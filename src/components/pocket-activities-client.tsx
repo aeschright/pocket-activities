@@ -237,8 +237,7 @@ export function PocketActivitiesClient() {
     if (selectedActivity?.daylightNeeded && !weather && !isFetchingWeather && !locationError) {
       getLocationAndFetchData();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedActivity]);
+  }, [selectedActivity, weather, isFetchingWeather, locationError]);
 
 
   useEffect(() => {
