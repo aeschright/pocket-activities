@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useTransition, useEffect } from 'react';
@@ -84,7 +85,7 @@ export function PocketActivitiesClient() {
 
       const result = await getSuggestionsAction({
         availableTimeMinutes: timeInMinutes,
-        daylightNeeded: daylightNeeded,
+        daylightNeeded: false, // We let the AI decide based on time to sunset
         minutesToSunset: minutesToSunset,
         weather: weatherPayload
       });
@@ -228,15 +229,11 @@ export function PocketActivitiesClient() {
 
   
   const filteredSuggestedActivities = suggestions.filter(activity => 
-    activity.duration <= timeInMinutes &&
-    (!daylightNeeded || activity.daylightNeeded)
+    activity.duration <= timeInMinutes
   );
 
   const filteredCustomActivities = useMemo(() => {
-    if (daylightNeeded) {
-      return customActivities.filter(activity => activity.daylightNeeded);
-    }
-    return customActivities;
+    return customActivities.filter(activity => !daylightNeeded || activity.daylightNeeded);
   }, [customActivities, daylightNeeded]);
 
   const WeatherDisplay = () => {
@@ -278,7 +275,7 @@ export function PocketActivitiesClient() {
         </CardHeader>
         <CardContent className="grid gap-6">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 items-end gap-6">
-            <div className="space-y-2">
+            <div className="space-y-2 lg:col-span-2">
               <Label htmlFor="time-input">Available Time</Label>
               <div className="flex space-x-2">
                 <Input 
@@ -300,16 +297,6 @@ export function PocketActivitiesClient() {
                 </Select>
               </div>
             </div>
-            <div className="flex items-center space-x-2 self-end pb-2.5">
-              <Switch 
-                id="daylight-switch"
-                checked={daylightNeeded}
-                onCheckedChange={(checked) => {
-                  setDaylightNeeded(checked);
-                }}
-              />
-              <Label htmlFor="daylight-switch" className="text-base">Daylight Only</Label>
-            </div>
             <div className="lg:col-span-3">
               <Button onClick={handleGetSuggestions} disabled={isPending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
@@ -328,8 +315,8 @@ export function PocketActivitiesClient() {
                         <SelectValue placeholder="Select a custom activity..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {customActivities.length > 0 ? (
-                          customActivities.map(activity => (
+                        {filteredCustomActivities.length > 0 ? (
+                          filteredCustomActivities.map(activity => (
                             <SelectItem key={activity.id} value={activity.id}>
                               {activity.name} ({formatDuration(activity.duration)})
                             </SelectItem>
@@ -339,6 +326,14 @@ export function PocketActivitiesClient() {
                         )}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      id="daylight-switch"
+                      checked={daylightNeeded}
+                      onCheckedChange={setDaylightNeeded}
+                    />
+                    <Label htmlFor="daylight-switch" className="text-base">Daylight Only</Label>
                   </div>
                </div>
             </div>
@@ -466,7 +461,7 @@ export function PocketActivitiesClient() {
                 ) : hasSearched ? (
                 <div className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg">
                     <h3 className="text-xl font-semibold text-muted-foreground">No suggested activities found</h3>
-                    <p className="mt-2 text-muted-foreground">Try adjusting your time or daylight filter.</p>
+                    <p className="mt-2 text-muted-foreground">Try adjusting your time filter.</p>
                 </div>
                 ) : !isClient || customActivities.length === 0 ? (
                 <div className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg bg-card">
@@ -480,7 +475,7 @@ export function PocketActivitiesClient() {
             <div className="mt-8">
                 <h2 className="text-2xl font-headline font-bold mb-4">Your Custom Activities</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredCustomActivities.map(activity => (
+                {customActivities.map(activity => (
                     <ActivityCard 
                         key={activity.id} 
                         activity={activity} 
@@ -496,3 +491,5 @@ export function PocketActivitiesClient() {
     </div>
   );
 }
+
+    

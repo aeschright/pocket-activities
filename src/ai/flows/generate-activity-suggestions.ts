@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -59,9 +60,6 @@ Each suggestion must have a duration that is less than or equal to the available
 
 If the available time is over 2 hours (120 minutes), all suggestions provided should be for activities that are at least 60 minutes long.
 
-{{#if daylightNeeded}}
-All suggestions must require daylight.
-{{else}}
 The user has not specified if they need daylight. 
 {{#if minutesToSunset}}
 There are {{minutesToSunset}} minutes until sunset. If this is greater than 0, at least half of the suggestions should require daylight.
@@ -69,7 +67,6 @@ There are {{minutesToSunset}} minutes until sunset. If this is greater than 0, a
 Use the isDaylight tool to determine if it is currently daytime. If it is, at least half of the suggestions should require daylight.
 {{/if}}
 You can suggest activities like a day hike (4 hours), gardening (1 hour), or sketching (1-2 hours) as examples of daylight activities.
-{{/if}}
 
 {{#if weather}}
 For any outdoor activities suggested, provide a helpful weather-related tip. Activities that require daylight are considered outdoor activities and MUST have a weather tip.
@@ -100,3 +97,5 @@ const generateActivitySuggestionsFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
