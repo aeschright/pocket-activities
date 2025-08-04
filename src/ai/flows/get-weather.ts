@@ -90,23 +90,22 @@ function weatherCodeToString(code: number): string {
 }
 
 
-const getWeatherPrompt = ai.definePrompt({
-  name: 'getWeatherPrompt',
-  input: {schema: GetWeatherInputSchema},
-  output: {schema: WeatherDataSchema},
-  tools: [getWeatherTool],
-  prompt: `You are a weather assistant. The user has provided a latitude and longitude.
-You MUST call the getWeatherTool with the provided latitude and longitude to get the current weather information.
-Do not make up weather data.
-Latitude: {{{latitude}}}
-Longitude: {{{longitude}}}`,
-});
-
+const getWeatherFlow = ai.defineFlow(
+    {
+        name: 'getWeatherFlow',
+        inputSchema: GetWeatherInputSchema,
+        outputSchema: WeatherDataSchema,
+    },
+    async (input) => {
+        // Directly call the tool to avoid ambiguity with the LLM.
+        return await getWeatherTool(input);
+    }
+);
 
 export async function getWeather(input: GetWeatherInput): Promise<GetWeatherOutput> {
-    const {output} = await getWeatherPrompt(input);
-    if (!output) {
+    const result = await getWeatherFlow(input);
+    if (!result) {
         throw new Error('Could not get weather data.');
     }
-    return output;
+    return result;
 }
