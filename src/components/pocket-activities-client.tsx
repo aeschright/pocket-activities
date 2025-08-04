@@ -92,29 +92,21 @@ export function PocketActivitiesClient() {
     setCustomActivities(prev => prev.filter(activity => activity.id !== idToDelete));
   };
 
-  const filteredActivities = useMemo(() => {
+  const filteredCustomActivities = useMemo(() => {
     const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
-    
-    const allActivities = [...suggestions, ...customActivities];
-
-    if (!hasSearched && customActivities.length === 0) {
-      return [];
-    }
-    
-    if (hasSearched) {
-      return allActivities.filter(activity => 
-        activity.duration <= timeInMinutes &&
-        (!daylightNeeded || activity.daylightNeeded)
-      );
-    }
-    
-    // If we haven't searched, only show custom activities that match
+    if (!isClient) return [];
     return customActivities.filter(activity =>
         activity.duration <= timeInMinutes &&
         (!daylightNeeded || activity.daylightNeeded)
     );
-  }, [time, timeUnit, daylightNeeded, suggestions, customActivities, hasSearched]);
-  
+  }, [time, timeUnit, daylightNeeded, customActivities, isClient]);
+
+  const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
+  const filteredSuggestedActivities = suggestions.filter(activity => 
+    activity.duration <= timeInMinutes &&
+    (!daylightNeeded || activity.daylightNeeded)
+  );
+
   const WeatherDisplay = () => {
     if (isFetchingWeather) {
       return (
@@ -178,32 +170,56 @@ export function PocketActivitiesClient() {
               />
               <Label htmlFor="daylight-switch" className="text-base">Needs Daylight</Label>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:col-span-2 lg:col-span-1 lg:col-start-3">
-                <Button onClick={handleGetSuggestions} disabled={isPending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                  {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
-                  Suggest
-                </Button>
-                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Custom
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle className="font-headline text-2xl">Create a Custom Activity</SheetTitle>
-                    </SheetHeader>
-                    <div className="mt-4">
-                      <CustomActivityForm 
-                        onAddActivity={handleAddCustomActivity}
-                        onDone={() => setIsSheetOpen(false)}
-                      />
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
+            <div className="lg:col-span-3">
+              <Button onClick={handleGetSuggestions} disabled={isPending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
+                Suggest Activities
+              </Button>
+            </div>
           </div>
+
+          {isClient && customActivities.length > 0 && (
+            <div className="space-y-4 border-t pt-6">
+               <Label>Or pick a custom activity</Label>
+               <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a custom activity..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredCustomActivities.length > 0 ? (
+                      filteredCustomActivities.map(activity => (
+                        <SelectItem key={activity.id} value={activity.id}>
+                          {activity.name} ({activity.duration} min)
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>No matching custom activities</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+            </div>
+          )}
+
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="w-full justify-center">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add a Custom Activity
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle className="font-headline text-2xl">Create a Custom Activity</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4">
+                <CustomActivityForm 
+                  onAddActivity={handleAddCustomActivity}
+                  onDone={() => setIsSheetOpen(false)}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+
           <div className="border-t pt-4 mt-4 flex flex-col sm:flex-row items-center gap-4">
             <Button onClick={handleGetWeather} disabled={isFetchingWeather} variant="outline">
               {isFetchingWeather ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LocateIcon className="mr-2 h-4 w-4" />}
@@ -222,31 +238,40 @@ export function PocketActivitiesClient() {
               [...Array(3)].map((_, i) => (
                 <Card key={i}><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
               ))
-            ) : !isClient ? (
-              [...Array(3)].map((_, i) => (
-                <Card key={i}><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
-              ))
-            ) : filteredActivities.length > 0 ? (
-              filteredActivities.map(activity => (
+            ) : filteredSuggestedActivities.length > 0 ? (
+              filteredSuggestedActivities.map(activity => (
                 <ActivityCard 
                   key={activity.id} 
                   activity={activity} 
-                  onDelete={activity.isCustom ? handleDeleteCustomActivity : undefined}
                 />
               ))
             ) : hasSearched ? (
               <div className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg">
-                <h3 className="text-xl font-semibold text-muted-foreground">No activities found</h3>
-                <p className="mt-2 text-muted-foreground">Try adjusting your time or daylight filter, or add a custom activity!</p>
+                <h3 className="text-xl font-semibold text-muted-foreground">No suggested activities found</h3>
+                <p className="mt-2 text-muted-foreground">Try adjusting your time or daylight filter.</p>
               </div>
-            ) : (
+            ) : !isClient || customActivities.length === 0 ? (
                <div className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg bg-card">
                  <Sparkles className="mx-auto h-12 w-12 text-accent" />
                 <h3 className="mt-4 text-xl font-semibold text-foreground">Ready for an adventure?</h3>
-                <p className="mt-2 text-muted-foreground">Adjust your filters or click "Suggest" to get your first batch of ideas!</p>
+                <p className="mt-2 text-muted-foreground">Click "Suggest" to get your first batch of ideas or add a custom one!</p>
               </div>
-            )}
+            ) : null}
         </div>
+        {isClient && customActivities.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-headline font-bold mb-4">Your Custom Activities</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {customActivities.map(activity => (
+                  <ActivityCard 
+                    key={activity.id} 
+                    activity={activity} 
+                    onDelete={handleDeleteCustomActivity}
+                  />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
