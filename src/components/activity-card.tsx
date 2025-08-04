@@ -1,17 +1,18 @@
 import type { Activity } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Sun, Globe, User, Trash2, Info, Bolt } from 'lucide-react';
+import { Clock, Sun, Globe, User, Trash2, Info, Bolt, Pencil } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { cn, formatDuration } from '@/lib/utils';
 
 interface ActivityCardProps {
   activity: Activity;
   onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
   onClick?: (id: string) => void;
 }
 
-export function ActivityCard({ activity, onDelete, onClick }: ActivityCardProps) {
+export function ActivityCard({ activity, onDelete, onEdit, onClick }: ActivityCardProps) {
   return (
     <TooltipProvider>
       <Card 
@@ -22,7 +23,7 @@ export function ActivityCard({ activity, onDelete, onClick }: ActivityCardProps)
         onClick={() => onClick?.(activity.id)}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-lg font-headline pr-8">{activity.name}</CardTitle>
+          <CardTitle className="text-lg font-headline pr-16">{activity.name}</CardTitle>
            {activity.isCustom && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -74,27 +75,50 @@ export function ActivityCard({ activity, onDelete, onClick }: ActivityCardProps)
             </Tooltip>
           )}
         </CardContent>
-        {activity.isCustom && onDelete && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                onClick={(e) => {
-                    e.stopPropagation(); // prevent card's onClick
-                    onDelete(activity.id)
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-                <span className="sr-only">Delete activity</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Delete Activity</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
+        <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {activity.isCustom && onEdit && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                  onClick={(e) => {
+                      e.stopPropagation(); // prevent card's onClick
+                      onEdit(activity.id)
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                  <span className="sr-only">Edit activity</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Edit Activity</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {activity.isCustom && onDelete && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                  onClick={(e) => {
+                      e.stopPropagation(); // prevent card's onClick
+                      onDelete(activity.id)
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Delete activity</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete Activity</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </Card>
     </TooltipProvider>
   );

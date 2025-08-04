@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -33,13 +34,17 @@ const formSchema = z.object({
   energyLevel: z.enum(["Any", "Tired", "Low Focus", "Ready to Go", "High Energy"]).optional(),
 });
 
+type FormData = z.infer<typeof formSchema>;
+
 interface CustomActivityFormProps {
-  onAddActivity: (activity: Omit<Activity, 'id' | 'isCustom'>) => void;
+  onAddActivity?: (activity: Omit<Activity, 'id' | 'isCustom'>) => void;
+  onEditActivity?: (activity: Activity) => void;
   onDone: () => void;
+  activityToEdit?: Activity | null;
 }
 
-export function CustomActivityForm({ onAddActivity, onDone }: CustomActivityFormProps) {
-  const form = useForm<z.infer<typeof formSchema>>({
+export function CustomActivityForm({ onAddActivity, onEditActivity, onDone, activityToEdit }: CustomActivityFormProps) {
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -49,12 +54,37 @@ export function CustomActivityForm({ onAddActivity, onDone }: CustomActivityForm
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  useEffect(() => {
+    if (activityToEdit) {
+      form.reset({
+        name: activityToEdit.name,
+        duration: activityToEdit.duration,
+        daylightNeeded: activityToEdit.daylightNeeded,
+        energyLevel: activityToEdit.energyLevel || "Any",
+      });
+    } else {
+        form.reset({
+            name: "",
+            duration: 30,
+            daylightNeeded: false,
+            energyLevel: "Any",
+        });
+    }
+  }, [activityToEdit, form]);
+
+  function onSubmit(values: FormData) {
     const { energyLevel, ...rest } = values;
-    onAddActivity({
+    const activityData = {
         ...rest,
         energyLevel: energyLevel === "Any" ? undefined : (energyLevel as EnergyLevel),
-    });
+    }
+
+    if (activityToEdit) {
+        onEditActivity?.({ ...activityData, id: activityToEdit.id, isCustom: true });
+    } else {
+        onAddActivity?.(activityData);
+    }
+    
     form.reset();
     onDone();
   }
@@ -94,7 +124,7 @@ export function CustomActivityForm({ onAddActivity, onDone }: CustomActivityForm
           render={({ field }) => (
             <FormItem>
               <FormLabel>Energy Level</FormLabel>
-               <Select onValueChange={field.onChange} defaultValue={field.value}>
+               <Select onValueChange={field.onChange} value={field.value || 'Any'}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select an energy level" />
@@ -137,7 +167,9 @@ export function CustomActivityForm({ onAddActivity, onDone }: CustomActivityForm
         />
         <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="ghost" onClick={onDone}>Cancel</Button>
-            <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90">Add Activity</Button>
+            <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90">
+              {activityToEdit ? "Save Changes" : "Add Activity"}
+            </Button>
         </div>
       </form>
     </Form>

@@ -48,6 +48,7 @@ export function PocketActivitiesClient() {
   const [selectedSuggestedActivity, setSelectedSuggestedActivity] = useState<Activity | null>(null);
 
   const [timeToSunset, setTimeToSunset] = useState<string | null>(null);
+  const [activityToEdit, setActivityToEdit] = useState<Activity | null>(null);
 
 
   const { toast } = useToast();
@@ -217,10 +218,30 @@ export function PocketActivitiesClient() {
     setCustomActivities(prev => [...prev, newActivity]);
   };
   
+  const handleEditCustomActivity = (editedActivity: Activity) => {
+    setCustomActivities(prev => prev.map(activity => activity.id === editedActivity.id ? editedActivity : activity));
+    setActivityToEdit(null);
+  };
+  
   const handleDeleteCustomActivity = (idToDelete: string) => {
     setCustomActivities(prev => prev.filter(activity => activity.id !== idToDelete));
     if (selectedCustomActivityId === idToDelete) {
       setSelectedCustomActivityId(null);
+    }
+  };
+
+  const handleOpenEditSheet = (id: string) => {
+    const activity = customActivities.find(a => a.id === id);
+    if (activity) {
+      setActivityToEdit(activity);
+      setIsSheetOpen(true);
+    }
+  };
+  
+  const handleSheetOpenChange = (open: boolean) => {
+    setIsSheetOpen(open);
+    if (!open) {
+      setActivityToEdit(null);
     }
   };
 
@@ -266,7 +287,7 @@ export function PocketActivitiesClient() {
       getLocationAndFetchData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedActivity, isFetchingWeather, locationError]);
+  }, [selectedActivity, weather, isFetchingWeather, locationError]);
 
 
   useEffect(() => {
@@ -294,7 +315,7 @@ export function PocketActivitiesClient() {
               weatherTipShort: result[0].weatherTipShort,
               weatherTipLong: result[0].weatherTipLong,
           };
-
+          
           if (selectedActivity.isCustom) {
             const updatedActivity = { ...selectedActivity, ...updatedTip };
             setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? updatedActivity : a));
@@ -314,7 +335,7 @@ export function PocketActivitiesClient() {
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weather, isFetchingWeather]);
+  }, [weather, isFetchingWeather, selectedActivity]);
 
   useEffect(() => {
     if (sunriseSunset?.sunset) {
@@ -437,7 +458,7 @@ export function PocketActivitiesClient() {
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
                 Suggest Activities
               </Button>
-              <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+              <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
                 <SheetTrigger asChild>
                   <Button variant="outline" className="w-full justify-center">
                     <PlusCircle className="mr-2 h-4 w-4" />
@@ -446,11 +467,13 @@ export function PocketActivitiesClient() {
                 </SheetTrigger>
                 <SheetContent>
                   <SheetHeader>
-                    <SheetTitle className="font-headline text-2xl">Create a Custom Activity</SheetTitle>
+                    <SheetTitle className="font-headline text-2xl">{activityToEdit ? 'Edit Activity' : 'Create a Custom Activity'}</SheetTitle>
                   </SheetHeader>
                   <div className="mt-4">
                     <CustomActivityForm 
                       onAddActivity={handleAddCustomActivity}
+                      onEditActivity={handleEditCustomActivity}
+                      activityToEdit={activityToEdit}
                       onDone={() => setIsSheetOpen(false)}
                     />
                   </div>
@@ -632,7 +655,8 @@ export function PocketActivitiesClient() {
                 {customActivities.map(activity => (
                     <ActivityCard 
                         key={activity.id} 
-                        activity={activity} 
+                        activity={activity}
+                        onEdit={() => handleOpenEditSheet(activity.id)}
                         onDelete={handleDeleteCustomActivity}
                         onClick={() => handleCustomActivitySelect(activity.id)}
                     />
