@@ -50,7 +50,7 @@ const getWeatherPrompt = ai.definePrompt({
   input: {schema: GetWeatherInputSchema},
   output: {schema: WeatherDataSchema},
   tools: [getWeatherTool],
-  prompt: `Get the weather for latitude {{{latitude}}} and longitude {{{longitude}}}.`,
+  prompt: `Use the getWeatherTool to get the weather for latitude {{{latitude}}} and longitude {{{longitude}}}.`,
 });
 
 
