@@ -78,57 +78,37 @@ export function PocketActivitiesClient() {
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
       
-      // Fetch Weather
+      const weatherPromise = getWeatherAction({ latitude, longitude });
+      const sunriseSunsetPromise = getSunriseSunsetAction({ latitude, longitude });
+
       try {
-        const weatherResult = await getWeatherAction({ latitude, longitude });
+        const [weatherResult, sunriseSunsetResult] = await Promise.all([weatherPromise, sunriseSunsetPromise]);
+
         if (weatherResult && 'error' in weatherResult) {
-          toast({
-            variant: "destructive",
-            title: "Weather Error",
-            description: weatherResult.error,
-          });
-          setWeather(null);
+            toast({ variant: "destructive", title: "Weather Error", description: weatherResult.error });
+            setWeather(null);
         } else {
-          setWeather(weatherResult as WeatherData);
+            setWeather(weatherResult as WeatherData);
         }
+        
+        if (sunriseSunsetResult && 'error' in sunriseSunsetResult) {
+            toast({ variant: "destructive", title: "Sunrise/Sunset Error", description: sunriseSunsetResult.error });
+            setSunriseSunset(null);
+        } else {
+            setSunriseSunset(sunriseSunsetResult as SunriseSunsetData);
+        }
+
       } catch (e: any) {
          toast({
             variant: "destructive",
-            title: "Weather Error",
-            description: e.message || "An unexpected error occurred.",
+            title: "Data Fetching Error",
+            description: e.message || "An unexpected error occurred while fetching location data.",
           });
           setWeather(null);
+          setSunriseSunset(null);
       } finally {
         setIsFetchingWeather(false);
-      }
-
-      // Fetch Sunrise/Sunset only if needed
-      if (daylightNeeded || selectedCustomActivity?.daylightNeeded) {
-        try {
-          const sunriseSunsetResult = await getSunriseSunsetAction({ latitude, longitude });
-          if (sunriseSunsetResult && 'error' in sunriseSunsetResult) {
-              toast({
-                  variant: "destructive",
-                  title: "Sunrise/Sunset Error",
-                  description: sunriseSunsetResult.error,
-              });
-              setSunriseSunset(null);
-          } else {
-              setSunriseSunset(sunriseSunsetResult as SunriseSunsetData);
-          }
-        } catch(e: any) {
-           toast({
-              variant: "destructive",
-              title: "Sunrise/Sunset Error",
-              description: e.message || "An unexpected error occurred.",
-            });
-            setSunriseSunset(null);
-        } finally {
-          setIsFetchingSunriseSunset(false);
-        }
-      } else {
         setIsFetchingSunriseSunset(false);
-        setSunriseSunset(null);
       }
 
     }, (error) => {
