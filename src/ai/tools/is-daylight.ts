@@ -6,23 +6,20 @@ import { ai } from '@/ai/genkit';
 import { getSunriseSunsetAction } from '@/app/actions';
 import { z } from 'zod';
 
-// This tool doesn't require any input from the LLM, but we need to define an empty schema.
-const IsDaylightInputSchema = z.object({});
+// This tool now requires latitude and longitude from the LLM.
+const IsDaylightInputSchema = z.object({
+  latitude: z.number().describe("The user's latitude."),
+  longitude: z.number().describe("The user's longitude."),
+});
 
 export const isDaylight = ai.defineTool(
   {
     name: 'isDaylight',
-    description: 'Checks if it is currently daylight based on the user\'s location by comparing current time to sunrise and sunset times. This tool requires the user to grant location permissions in their browser.',
-    input: { schema: IsDaylightInputSchema },
-    output: { schema: z.boolean() },
+    description: 'Checks if it is currently daylight based on the user\'s location by comparing current time to sunrise and sunset times.',
+    inputSchema: IsDaylightInputSchema,
+    outputSchema: z.boolean(),
   },
-  async () => {
-    // This is a placeholder for the actual implementation that would get the user's location.
-    // In a real application, you would need to get the user's latitude and longitude.
-    // For this example, we'll use a fixed location (e.g., Google HQ).
-    const latitude = 37.422;
-    const longitude = -122.084;
-    
+  async ({ latitude, longitude }) => {
     const sunriseSunsetData = await getSunriseSunsetAction({ latitude, longitude });
 
     if ('error' in sunriseSunsetData) {

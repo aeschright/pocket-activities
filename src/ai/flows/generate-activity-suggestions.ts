@@ -27,6 +27,10 @@ const GenerateActivitySuggestionsInputSchema = z.object({
       uvIndex: z.number().describe('The current UV index.'),
       precipitationProbability: z.number().describe('The probability of precipitation in the next hour, as a percentage.'),
   })).describe('Optional. Current weather conditions to help generate tips.'),
+   coords: z.optional(z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+  })).describe('Optional. The user\'s coordinates. Needed for the isDaylight tool.'),
 });
 
 const SuggestionSchema = z.object({
@@ -63,8 +67,10 @@ If the available time is over 2 hours (120 minutes), all suggestions provided sh
 The user has not specified if they need daylight. 
 {{#if minutesToSunset}}
 There are {{minutesToSunset}} minutes until sunset. If this is greater than 0, at least half of the suggestions should require daylight.
+{{else if coords}}
+Use the isDaylight tool with the provided coordinates (latitude: {{coords.latitude}}, longitude: {{coords.longitude}}) to determine if it is currently daytime. If it is, at least half of the suggestions should require daylight.
 {{else}}
-Use the isDaylight tool to determine if it is currently daytime. If it is, at least half of the suggestions should require daylight.
+Suggest a mix of indoor and outdoor activities.
 {{/if}}
 You can suggest activities like a day hike (4 hours), gardening (1 hour), or sketching (1-2 hours) as examples of daylight activities.
 
@@ -97,5 +103,3 @@ const generateActivitySuggestionsFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

@@ -23,6 +23,11 @@ export interface SunriseSunsetData {
     sunset: string;
 }
 
+export interface Coords {
+  latitude: number;
+  longitude: number;
+}
+
 
 // AI Flow Types
 
@@ -38,6 +43,10 @@ const GenerateActivitySuggestionsInputSchema = z.object({
       uvIndex: z.number().describe('The current UV index.'),
       precipitationProbability: z.number().describe('The probability of precipitation in the next hour, as a percentage.'),
   })).describe('Optional. Current weather conditions to help generate tips.'),
+  coords: z.optional(z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+  })).describe('Optional. The user\'s coordinates. Needed for the isDaylight tool.'),
 });
 export type GenerateActivitySuggestionsInput = z.infer<
   typeof GenerateActivitySuggestionsInputSchema

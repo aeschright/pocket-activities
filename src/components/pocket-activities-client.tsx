@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useTransition, useEffect } from 'react';
-import type { Activity, WeatherData, SunriseSunsetData } from '@/lib/types';
+import type { Activity, WeatherData, SunriseSunsetData, Coords } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { getSuggestionsAction, getWeatherAction, getSunriseSunsetAction } from '@/app/actions';
 
@@ -37,6 +37,8 @@ export function PocketActivitiesClient() {
 
   const [sunriseSunset, setSunriseSunset] = useState<SunriseSunsetData | null>(null);
   const [isFetchingSunriseSunset, setIsFetchingSunriseSunset] = useState(false);
+
+  const [coords, setCoords] = useState<Coords | null>(null);
 
   const [selectedCustomActivityId, setSelectedCustomActivityId] = useState<string | null>(null);
   const [selectedSuggestedActivityId, setSelectedSuggestedActivityId] = useState<string | null>(null);
@@ -87,7 +89,8 @@ export function PocketActivitiesClient() {
         availableTimeMinutes: timeInMinutes,
         daylightNeeded: false, // We let the AI decide based on time to sunset
         minutesToSunset: minutesToSunset,
-        weather: weatherPayload
+        weather: weatherPayload,
+        coords: coords ?? undefined,
       });
       setSuggestions(result);
     });
@@ -108,6 +111,7 @@ export function PocketActivitiesClient() {
 
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
+      setCoords({ latitude, longitude });
       
       try {
         const [weatherResult, sunriseSunsetResult] = await Promise.all([
@@ -491,5 +495,3 @@ export function PocketActivitiesClient() {
     </div>
   );
 }
-
-    
