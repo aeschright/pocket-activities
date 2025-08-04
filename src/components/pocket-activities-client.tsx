@@ -15,10 +15,12 @@ import { CustomActivityForm } from '@/components/custom-activity-form';
 import { ActivityCard } from '@/components/activity-card';
 import { PlusCircle, Zap, Loader2, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 export function PocketActivitiesClient() {
   const [time, setTime] = useState(60);
+  const [timeUnit, setTimeUnit] = useState('minutes');
   const [daylightNeeded, setDaylightNeeded] = useState(false);
   const [suggestions, setSuggestions] = useState<Activity[]>([]);
   const [customActivities, setCustomActivities] = useLocalStorage<Activity[]>('custom-activities', []);
@@ -30,8 +32,9 @@ export function PocketActivitiesClient() {
   const handleGetSuggestions = () => {
     setHasSearched(true);
     startTransition(async () => {
+      const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
       const result = await getSuggestionsAction({
-        availableTimeMinutes: time,
+        availableTimeMinutes: timeInMinutes,
         daylightNeeded: daylightNeeded,
       });
       setSuggestions(result);
@@ -53,11 +56,12 @@ export function PocketActivitiesClient() {
 
   const filteredActivities = useMemo(() => {
     const allActivities = [...suggestions, ...customActivities];
+    const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
     return allActivities.filter(activity => 
-      activity.duration <= time &&
+      activity.duration <= timeInMinutes &&
       (daylightNeeded ? activity.daylightNeeded === true : true)
     );
-  }, [time, daylightNeeded, suggestions, customActivities]);
+  }, [time, timeUnit, daylightNeeded, suggestions, customActivities]);
 
   return (
     <div className="space-y-8">
@@ -68,15 +72,26 @@ export function PocketActivitiesClient() {
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-end">
           <div className="space-y-2">
-            <Label htmlFor="time-input">Available Time (minutes)</Label>
-            <Input 
-              id="time-input" 
-              type="number" 
-              value={time} 
-              onChange={(e) => setTime(Math.max(0, parseInt(e.target.value, 10) || 0))} 
-              placeholder="e.g. 60"
-              className="text-base"
-            />
+            <Label htmlFor="time-input">Available Time</Label>
+            <div className="flex space-x-2">
+              <Input 
+                id="time-input" 
+                type="number" 
+                value={time} 
+                onChange={(e) => setTime(Math.max(0, parseInt(e.target.value, 10) || 0))} 
+                placeholder="e.g. 60"
+                className="text-base"
+              />
+              <Select value={timeUnit} onValueChange={setTimeUnit}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="minutes">Minutes</SelectItem>
+                  <SelectItem value="hours">Hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="flex items-center space-x-3 pb-2">
             <Switch 
