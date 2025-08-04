@@ -13,11 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CustomActivityForm } from '@/components/custom-activity-form';
 import { ActivityCard } from '@/components/activity-card';
-import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon, SunDim, Droplet, AlertTriangle, RefreshCw } from 'lucide-react';
+import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon, SunDim, Droplet, AlertTriangle, RefreshCw, Info } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, differenceInMinutes } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 
 export function PocketActivitiesClient() {
@@ -401,8 +402,24 @@ export function PocketActivitiesClient() {
                 </div>
              </div>
              
+             {selectedActivity.weatherTip && (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="flex items-center text-sm text-accent-foreground border-t border-dashed border-accent/20 pt-3 mt-3">
+                                <Info className="mr-1.5 h-4 w-4 text-accent" />
+                                <span>{selectedActivity.weatherTip}</span>
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" align="start">
+                            <p>Based on current weather conditions.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+             )}
+
              {!selectedActivityFitsCriteria && (
-                <div className="flex items-center text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
+                <div className="flex items-center text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3 mt-4">
                     <AlertTriangle className="mr-2 h-5 w-5" />
                     <span>This activity doesn't fit your current "Available Time" or "Daylight" settings.</span>
                 </div>
