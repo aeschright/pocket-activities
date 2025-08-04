@@ -230,7 +230,10 @@ export function PocketActivitiesClient() {
   
   const selectedActivityFitsCriteria = useMemo(() => {
     if (!selectedActivity) return false;
-    const fitsTime = selectedActivity.duration <= timeInMinutes;
+
+    // For custom activities, we don't need to warn about time mismatch.
+    const fitsTime = selectedActivity.isCustom ? true : selectedActivity.duration <= timeInMinutes;
+
     const fitsDaylight = !daylightNeeded || selectedActivity.daylightNeeded;
     const fitsEnergy = energyLevel === 'any' || !selectedActivity.energyLevel || selectedActivity.energyLevel === energyLevel;
 
