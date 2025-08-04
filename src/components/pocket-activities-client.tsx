@@ -63,45 +63,78 @@ export function PocketActivitiesClient() {
   };
   
   const getLocationAndFetchData = () => {
+    if (!navigator.geolocation) {
+       toast({
+        variant: "destructive",
+        title: "Geolocation Not Supported",
+        description: "Your browser does not support geolocation.",
+      });
+      return;
+    }
+  
+    setIsFetchingWeather(true);
+    setIsFetchingSunriseSunset(true);
+
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
       
       // Fetch Weather
-      setIsFetchingWeather(true);
-      const weatherResult = await getWeatherAction({ latitude, longitude });
-      if (weatherResult && 'error' in weatherResult) {
-        toast({
-          variant: "destructive",
-          title: "Weather Error",
-          description: weatherResult.error,
-        })
-      } else {
-        setWeather(weatherResult);
-      }
-      setIsFetchingWeather(false);
-      
-      // Fetch Sunrise/Sunset
-      if (daylightNeeded || selectedCustomActivity?.daylightNeeded) {
-        setIsFetchingSunriseSunset(true);
-        const sunriseSunsetResult = await getSunriseSunsetAction({ latitude, longitude });
-        if (sunriseSunsetResult && 'error' in sunriseSunsetResult) {
-            toast({
-                variant: "destructive",
-                title: "Sunrise/Sunset Error",
-                description: sunriseSunsetResult.error,
-            })
+      try {
+        const weatherResult = await getWeatherAction({ latitude, longitude });
+        if (weatherResult && 'error' in weatherResult) {
+          toast({
+            variant: "destructive",
+            title: "Weather Error",
+            description: weatherResult.error,
+          });
+          setWeather(null);
         } else {
-            setSunriseSunset(sunriseSunsetResult);
+          setWeather(weatherResult);
         }
+      } catch (e: any) {
+         toast({
+            variant: "destructive",
+            title: "Weather Error",
+            description: e.message || "An unexpected error occurred.",
+          });
+          setWeather(null);
+      } finally {
+        setIsFetchingWeather(false);
+      }
+
+      // Fetch Sunrise/Sunset only if needed
+      if (daylightNeeded || selectedCustomActivity?.daylightNeeded) {
+        try {
+          const sunriseSunsetResult = await getSunriseSunsetAction({ latitude, longitude });
+          if (sunriseSunsetResult && 'error' in sunriseSunsetResult) {
+              toast({
+                  variant: "destructive",
+                  title: "Sunrise/Sunset Error",
+                  description: sunriseSunsetResult.error,
+              });
+              setSunriseSunset(null);
+          } else {
+              setSunriseSunset(sunriseSunsetResult);
+          }
+        } catch(e: any) {
+           toast({
+              variant: "destructive",
+              title: "Sunrise/Sunset Error",
+              description: e.message || "An unexpected error occurred.",
+            });
+            setSunriseSunset(null);
+        } finally {
+          setIsFetchingSunriseSunset(false);
+        }
+      } else {
         setIsFetchingSunriseSunset(false);
       }
 
     }, (error) => {
-      console.error("Geolocation error:", error);
       toast({
         variant: "destructive",
         title: "Location Error",
-        description: "Could not get your location. Please ensure location services are enabled.",
+        description: `Could not get your location: ${error.message}`,
       })
       setIsFetchingWeather(false);
       setIsFetchingSunriseSunset(false);
@@ -144,7 +177,7 @@ export function PocketActivitiesClient() {
       getLocationAndFetchData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCustomActivity, sunriseSunset]);
+  }, [selectedCustomActivity]);
 
   useEffect(() => {
     if (sunriseSunset?.sunset) {
@@ -158,6 +191,8 @@ export function PocketActivitiesClient() {
         }
       }, 1000);
       return () => clearInterval(interval);
+    } else {
+        setTimeToSunset(null);
     }
   }, [sunriseSunset]);
 
@@ -227,7 +262,13 @@ export function PocketActivitiesClient() {
               <Switch 
                 id="daylight-switch"
                 checked={daylightNeeded}
-                onCheckedChange={setDaylightNeeded}
+                onCheckedChange={(checked) => {
+                  setDaylightNeeded(checked);
+                  // Reset sunrise/sunset data if daylight is no longer needed
+                  if (!checked) {
+                    setSunriseSunset(null);
+                  }
+                }}
               />
               <Label htmlFor="daylight-switch" className="text-base">Needs Daylight</Label>
             </div>
@@ -282,8 +323,8 @@ export function PocketActivitiesClient() {
           </Sheet>
 
           <div className="border-t pt-4 mt-4 flex flex-col sm:flex-row items-center gap-4">
-            <Button onClick={getLocationAndFetchData} disabled={isFetchingWeather} variant="outline">
-              {isFetchingWeather ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LocateIcon className="mr-2 h-4 w-4" />}
+            <Button onClick={getLocationAndFetchData} disabled={isFetchingWeather || isFetchingSunriseSunset} variant="outline">
+              {(isFetchingWeather || isFetchingSunriseSunset) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LocateIcon className="mr-2 h-4 w-4" />}
               Get My Weather
             </Button>
             <div className="flex-1">
@@ -325,9 +366,12 @@ export function PocketActivitiesClient() {
                         <p className="text-sm text-accent-foreground font-medium">
                             Time until sunset: {timeToSunset}
                         </p>
+                    ) : sunriseSunset === null && !isFetchingSunriseSunset ? (
+                        <p className="text-sm text-muted-foreground">Click "Get My Weather" to fetch sunset time.</p>
                     ) : (
                         <p className="text-sm text-muted-foreground">Could not determine sunset time.</p>
-                    )}
+                    )
+                    }
                 </div>
              )}
           </CardContent>
