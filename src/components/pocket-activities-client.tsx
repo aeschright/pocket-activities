@@ -229,6 +229,13 @@ export function PocketActivitiesClient() {
     (!daylightNeeded || activity.daylightNeeded)
   );
 
+  const filteredCustomActivities = useMemo(() => {
+    if (daylightNeeded) {
+      return customActivities.filter(activity => activity.daylightNeeded);
+    }
+    return customActivities;
+  }, [customActivities, daylightNeeded]);
+
   const WeatherDisplay = () => {
     if (isFetchingWeather) {
       return (
@@ -309,14 +316,14 @@ export function PocketActivitiesClient() {
                         <SelectValue placeholder="Select a custom activity..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {customActivities.length > 0 ? (
-                          customActivities.map(activity => (
+                        {filteredCustomActivities.length > 0 ? (
+                          filteredCustomActivities.map(activity => (
                             <SelectItem key={activity.id} value={activity.id}>
                               {activity.name} ({activity.duration} min)
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="none" disabled>No custom activities</SelectItem>
+                          <SelectItem value="none" disabled>No custom activities match</SelectItem>
                         )}
                       </SelectContent>
                     </Select>
