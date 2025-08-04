@@ -17,7 +17,7 @@ import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clo
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, differenceInMinutes } from 'date-fns';
 
 
 export function PocketActivitiesClient() {
@@ -54,9 +54,19 @@ export function PocketActivitiesClient() {
     setSelectedCustomActivityId(null);
     startTransition(async () => {
       const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
+      
+      let minutesToSunset: number | undefined = undefined;
+      if (sunriseSunset?.sunset) {
+        const sunsetDate = new Date(sunriseSunset.sunset);
+        if (sunsetDate > new Date()) {
+          minutesToSunset = differenceInMinutes(sunsetDate, new Date());
+        }
+      }
+
       const result = await getSuggestionsAction({
         availableTimeMinutes: timeInMinutes,
         daylightNeeded: daylightNeeded,
+        minutesToSunset: minutesToSunset,
       });
       setSuggestions(result);
     });
@@ -84,17 +94,17 @@ export function PocketActivitiesClient() {
       try {
         const [weatherResult, sunriseSunsetResult] = await Promise.all([weatherPromise, sunriseSunsetPromise]);
 
-        if ('error' in weatherResult) {
+        if (weatherResult && 'error' in weatherResult) {
             toast({ variant: "destructive", title: "Weather Error", description: weatherResult.error });
             setWeather(null);
-        } else {
+        } else if (weatherResult) {
             setWeather(weatherResult);
         }
         
-        if ('error' in sunriseSunsetResult) {
+        if (sunriseSunsetResult && 'error' in sunriseSunsetResult) {
             toast({ variant: "destructive", title: "Sunrise/Sunset Error", description: sunriseSunsetResult.error });
             setSunriseSunset(null);
-        } else {
+        } else if (sunriseSunsetResult) {
             setSunriseSunset(sunriseSunsetResult);
         }
 

@@ -10,13 +10,26 @@ export async function getSuggestionsAction(input: GenerateActivitySuggestionsInp
     if (!result || !result.suggestions) {
       return [];
     }
-    const suggestions: Activity[] = result.suggestions.map((suggestion) => ({
-      id: `ai-${suggestion.activity.toLowerCase().replace(/\s+/g, '-')}-${Math.random()}`,
-      name: suggestion.activity,
-      duration: suggestion.duration,
-      isCustom: false,
-      daylightNeeded: input.daylightNeeded, 
-    }));
+
+    const suggestions: Activity[] = result.suggestions.map((suggestion) => {
+       // A simple heuristic to determine if an AI-suggested activity needs daylight.
+       // This could be improved with a more sophisticated check or another AI call.
+       const daylightNeededHeuristic = suggestion.activity.toLowerCase().includes('hike') || 
+                                       suggestion.activity.toLowerCase().includes('walk') ||
+                                       suggestion.activity.toLowerCase().includes('gardening') ||
+                                       suggestion.activity.toLowerCase().includes('sketching') ||
+                                       suggestion.activity.toLowerCase().includes('outside') ||
+                                       suggestion.activity.toLowerCase().includes('park') ||
+                                       suggestion.activity.toLowerCase().includes('run');
+
+      return {
+        id: `ai-${suggestion.activity.toLowerCase().replace(/\s+/g, '-')}-${Math.random()}`,
+        name: suggestion.activity,
+        duration: suggestion.duration,
+        isCustom: false,
+        daylightNeeded: daylightNeededHeuristic, 
+      }
+    });
     return suggestions;
   } catch (error) {
     console.error('Error generating activity suggestions:', error);

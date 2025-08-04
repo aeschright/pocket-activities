@@ -29,6 +29,7 @@ const GenerateActivitySuggestionsInputSchema = z.object({
   daylightNeeded: z
     .boolean()
     .describe('Whether the activity should require daylight or not.'),
+  minutesToSunset: z.optional(z.number()).describe('Optional. The number of minutes until sunset. If not provided, the model should infer whether it is daytime or not using tools.'),
 });
 export type GenerateActivitySuggestionsInput = z.infer<
   typeof GenerateActivitySuggestionsInputSchema
