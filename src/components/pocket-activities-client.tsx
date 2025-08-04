@@ -88,21 +88,14 @@ export function PocketActivitiesClient() {
 
   const filteredActivities = useMemo(() => {
     const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
-    
-    // The AI suggestions are already filtered by the backend based on the prompt.
-    // We only need to filter the custom activities.
-    const filteredCustom = customActivities.filter(activity => 
+
+    const filteredCustom = customActivities.filter(activity =>
       activity.duration <= timeInMinutes &&
-      (daylightNeeded ? activity.daylightNeeded === true : true)
+      (!daylightNeeded || activity.daylightNeeded)
     );
 
-    // If a search has been performed, combine the AI suggestions with the filtered custom activities.
-    // Otherwise, just show the filtered custom activities.
-    if (hasSearched) {
-      return [...suggestions, ...filteredCustom];
-    }
-    return filteredCustom;
-  }, [time, timeUnit, daylightNeeded, suggestions, customActivities, hasSearched]);
+    return [...suggestions, ...filteredCustom];
+  }, [time, timeUnit, daylightNeeded, suggestions, customActivities]);
   
   const WeatherDisplay = () => {
     if (isFetchingWeather) {
@@ -228,7 +221,7 @@ export function PocketActivitiesClient() {
                <div className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg bg-card">
                  <Sparkles className="mx-auto h-12 w-12 text-accent" />
                 <h3 className="mt-4 text-xl font-semibold text-foreground">Ready for an adventure?</h3>
-                <p className="mt-2 text-muted-foreground">Click "Suggest" to get your first batch of ideas!</p>
+                <p className="mt-2 text-muted-foreground">Adjust your filters or click "Suggest" to get your first batch of ideas!</p>
               </div>
             )}
         </div>
