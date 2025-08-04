@@ -87,14 +87,33 @@ export function PocketActivitiesClient() {
           }
       }
 
-      const result = await getSuggestionsAction({
+      const aiSuggestions = await getSuggestionsAction({
         availableTimeMinutes: timeInMinutes,
         daylightNeeded: false, // We let the AI decide based on time to sunset
         minutesToSunset: minutesToSunset,
         weather: weatherPayload,
         coords: coords ?? undefined,
       });
-      setSuggestions(result);
+
+      // Find matching custom activities
+      const matchingCustomActivities = customActivities.filter(activity =>
+        activity.duration <= timeInMinutes &&
+        (!daylightNeeded || activity.daylightNeeded)
+      );
+      
+      let finalSuggestions = aiSuggestions;
+
+      // Add one random matching custom activity if available
+      if (matchingCustomActivities.length > 0) {
+        const randomIndex = Math.floor(Math.random() * matchingCustomActivities.length);
+        const customSuggestion = matchingCustomActivities[randomIndex];
+        // Avoid adding a duplicate if the AI somehow suggested it.
+        if (!finalSuggestions.some(s => s.name === customSuggestion.name)) {
+            finalSuggestions = [customSuggestion, ...finalSuggestions];
+        }
+      }
+
+      setSuggestions(finalSuggestions);
     });
   };
   
@@ -279,7 +298,8 @@ export function PocketActivitiesClient() {
 
   
   const filteredSuggestedActivities = suggestions.filter(activity => 
-    activity.duration <= timeInMinutes
+    activity.duration <= timeInMinutes &&
+    (!daylightNeeded || activity.daylightNeeded)
   );
 
   const filteredCustomActivities = useMemo(() => {
