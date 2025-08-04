@@ -15,8 +15,6 @@ export async function getSuggestionsAction(input: GenerateActivitySuggestionsInp
       name: suggestion.activity,
       duration: suggestion.duration,
       isCustom: false,
-      // We don't know if the AI will respect this, so we have to trust it.
-      // For more complex scenarios, we might want to have the AI return structured data.
       daylightNeeded: input.daylightNeeded, 
     }));
     return suggestions;
