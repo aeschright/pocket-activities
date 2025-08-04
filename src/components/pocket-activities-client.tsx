@@ -98,10 +98,12 @@ export function PocketActivitiesClient() {
       });
 
       // Find matching custom activities
-      const matchingCustomActivities = customActivities.filter(activity =>
-        activity.duration <= timeInMinutes &&
-        (!daylightNeeded || activity.daylightNeeded)
-      );
+      const matchingCustomActivities = customActivities.filter(activity => {
+        const fitsTime = activity.duration <= timeInMinutes;
+        const fitsDaylight = !daylightNeeded || activity.daylightNeeded;
+        const fitsEnergy = energyLevel === 'any' || !activity.energyLevel || activity.energyLevel === energyLevel;
+        return fitsTime && fitsDaylight && fitsEnergy;
+      });
       
       let finalSuggestions = aiSuggestions;
 
@@ -230,8 +232,10 @@ export function PocketActivitiesClient() {
     if (!selectedActivity) return false;
     const fitsTime = selectedActivity.duration <= timeInMinutes;
     const fitsDaylight = !daylightNeeded || selectedActivity.daylightNeeded;
-    return fitsTime && fitsDaylight;
-  }, [selectedActivity, timeInMinutes, daylightNeeded]);
+    const fitsEnergy = energyLevel === 'any' || !selectedActivity.energyLevel || selectedActivity.energyLevel === energyLevel;
+
+    return fitsTime && fitsDaylight && fitsEnergy;
+  }, [selectedActivity, timeInMinutes, daylightNeeded, energyLevel]);
 
   useEffect(() => {
     if (selectedActivity?.daylightNeeded && !weather && !isFetchingWeather && !locationError) {
@@ -269,10 +273,11 @@ export function PocketActivitiesClient() {
 
           if (selectedActivity.isCustom) {
             const updatedActivity = { ...selectedActivity, ...updatedTip };
-            // This will trigger a re-render because the selectedActivity from the memo will be updated
-            setSelectedCustomActivityId(null); // Deselect to clear and re-select
             setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? updatedActivity : a));
-            setSelectedCustomActivityId(selectedActivity.id);
+            // To re-trigger the memo, we can't just update state that isn't a direct dependency.
+            // So we briefly deselect and re-select to force an update.
+            setSelectedCustomActivityId(null);
+            setTimeout(() => setSelectedCustomActivityId(selectedActivity.id), 0);
           } else {
              const originalSuggestion = suggestions.find(s => s.id === selectedActivity.id);
              if (originalSuggestion) {
@@ -309,14 +314,20 @@ export function PocketActivitiesClient() {
 
 
   
-  const filteredSuggestedActivities = suggestions.filter(activity => 
-    activity.duration <= timeInMinutes &&
-    (!daylightNeeded || activity.daylightNeeded)
-  );
+  const filteredSuggestedActivities = suggestions.filter(activity => {
+    const fitsTime = activity.duration <= timeInMinutes;
+    const fitsDaylight = !daylightNeeded || activity.daylightNeeded;
+    // AI suggestions don't have energy level yet, so we don't filter them
+    return fitsTime && fitsDaylight;
+  });
 
   const filteredCustomActivities = useMemo(() => {
-    return customActivities.filter(activity => !daylightNeeded || activity.daylightNeeded);
-  }, [customActivities, daylightNeeded]);
+    return customActivities.filter(activity => {
+      const fitsDaylight = !daylightNeeded || activity.daylightNeeded;
+      const fitsEnergy = energyLevel === 'any' || !activity.energyLevel || activity.energyLevel === energyLevel;
+      return fitsDaylight && fitsEnergy;
+    });
+  }, [customActivities, daylightNeeded, energyLevel]);
 
   const WeatherDisplay = () => {
     if (isFetchingWeather) {
@@ -480,7 +491,7 @@ export function PocketActivitiesClient() {
           </CardHeader>
           <CardContent className="space-y-4">
              <h3 className="text-xl font-semibold">{selectedActivity.name}</h3>
-             <div className="flex items-center space-x-6 text-muted-foreground">
+             <div className="flex items-center space-x-6 text-muted-foreground flex-wrap gap-y-2">
                 <div className="flex items-center">
                     <Clock className="mr-2 h-5 w-5" />
                     <span>{formatDuration(selectedActivity.duration)}</span>
@@ -493,6 +504,12 @@ export function PocketActivitiesClient() {
                     )}
                     <span>{selectedActivity.daylightNeeded ? "Needs Daylight" : "Do any time"}</span>
                 </div>
+                {selectedActivity.energyLevel && (
+                    <div className="flex items-center">
+                        <Bolt className="mr-2 h-5 w-5 text-yellow-500" />
+                        <span>{selectedActivity.energyLevel}</span>
+                    </div>
+                )}
              </div>
              
              {selectedActivity.weatherTipLong && (
@@ -528,7 +545,7 @@ export function PocketActivitiesClient() {
              {!selectedActivityFitsCriteria && (
                 <div className="flex items-center text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3 mt-4">
                     <AlertTriangle className="mr-2 h-5 w-5" />
-                    <span>This activity doesn't fit your current "Available Time" or "Daylight" settings.</span>
+                    <span>This activity doesn't fit your current settings.</span>
                 </div>
              )}
 
@@ -573,7 +590,7 @@ export function PocketActivitiesClient() {
                 ) : hasSearched ? (
                 <div className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg">
                     <h3 className="text-xl font-semibold text-muted-foreground">No suggested activities found</h3>
-                    <p className="mt-2 text-muted-foreground">Try adjusting your time filter.</p>
+                    <p className="mt-2 text-muted-foreground">Try adjusting your filters.</p>
                 </div>
                 ) : !isClient || customActivities.length === 0 ? (
                 <div className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg bg-card">

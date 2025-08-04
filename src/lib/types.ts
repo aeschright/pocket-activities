@@ -8,6 +8,7 @@ export interface Activity {
   isCustom?: boolean;
   weatherTipShort?: string;
   weatherTipLong?: string;
+  energyLevel?: EnergyLevel;
 }
 
 export interface WeatherData {

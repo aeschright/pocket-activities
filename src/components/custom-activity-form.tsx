@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import type { Activity } from "@/lib/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { Activity, EnergyLevel } from "@/lib/types";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -29,6 +30,7 @@ const formSchema = z.object({
     message: "Duration seems a bit long, doesn't it?"
   }),
   daylightNeeded: z.boolean().default(false),
+  energyLevel: z.enum(["Tired", "Low Focus", "Ready to Go", "High Energy"]).optional(),
 });
 
 interface CustomActivityFormProps {
@@ -77,6 +79,32 @@ export function CustomActivityForm({ onAddActivity, onDone }: CustomActivityForm
               <FormControl>
                 <Input type="number" placeholder="30" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="energyLevel"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Energy Level</FormLabel>
+               <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an energy level" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Tired">Tired</SelectItem>
+                  <SelectItem value="Low Focus">Low Focus</SelectItem>
+                  <SelectItem value="Ready to Go">Ready to Go</SelectItem>
+                  <SelectItem value="High Energy">High Energy</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                How much energy does this activity typically require?
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

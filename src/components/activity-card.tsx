@@ -1,7 +1,7 @@
 import type { Activity } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Sun, Globe, User, Trash2, Info } from 'lucide-react';
+import { Clock, Sun, Globe, User, Trash2, Info, Bolt } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { cn, formatDuration } from '@/lib/utils';
 
@@ -35,7 +35,7 @@ export function ActivityCard({ activity, onDelete, onClick }: ActivityCardProps)
           )}
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2 flex-wrap gap-y-1">
             <div className="flex items-center">
               <Clock className="mr-1.5 h-4 w-4" />
               {formatDuration(activity.duration)}
@@ -53,6 +53,12 @@ export function ActivityCard({ activity, onDelete, onClick }: ActivityCardProps)
                 </>
               )}
             </div>
+             {activity.energyLevel && (
+              <div className="flex items-center">
+                <Bolt className="mr-1.5 h-4 w-4 text-yellow-500" />
+                <span>{activity.energyLevel}</span>
+              </div>
+            )}
           </div>
           {activity.weatherTipShort && (
              <Tooltip>
