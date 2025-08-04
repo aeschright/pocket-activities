@@ -12,6 +12,7 @@ export interface WeatherData {
     temperature: number;
     conditions: string;
     forecast: string;
+    uvIndex: number;
 }
 
 export interface SunriseSunsetData {
@@ -71,5 +72,6 @@ const WeatherDataSchema = z.object({
   temperature: z.number().describe('The current temperature in Fahrenheit.'),
   conditions: z.string().describe('A brief description of the current weather conditions (e.g., "Sunny", "Cloudy").'),
   forecast: z.string().describe('A short forecast for the next hour.'),
+  uvIndex: z.number().describe('The current UV index.'),
 });
 export type GetWeatherOutput = z.infer<typeof WeatherDataSchema>;

@@ -39,20 +39,22 @@ export async function getSuggestionsAction(input: GenerateActivitySuggestionsInp
 
 export async function getWeatherAction(input: GetWeatherInput): Promise<GetWeatherOutput | { error: string }> {
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${input.latitude}&longitude=${input.longitude}&current_weather=true&hourly=temperature_2m,weathercode&temperature_unit=fahrenheit`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${input.latitude}&longitude=${input.longitude}&current=temperature_2m,weathercode,uv_index&hourly=temperature_2m,weathercode&temperature_unit=fahrenheit`;
       const response = await fetch(url, { cache: 'no-store' });
       if (!response.ok) {
         throw new Error(`Failed to fetch weather data: ${response.statusText}`);
       }
       const data = await response.json();
-      const weatherCode = data.current_weather.weathercode;
+      const weatherCode = data.current.weathercode;
       const conditions = weatherCodeToString(weatherCode);
-      const temperature = Math.round(data.current_weather.temperature);
+      const temperature = Math.round(data.current.temperature_2m);
+      const uvIndex = Math.round(data.current.uv_index);
       
       return {
         temperature: temperature,
         conditions: conditions,
         forecast: `The weather will be ${conditions.toLowerCase()} for the next hour.`,
+        uvIndex: uvIndex,
       };
     } catch (error: any) {
       console.error("Error fetching from weather API:", error);

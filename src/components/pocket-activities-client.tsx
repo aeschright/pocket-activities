@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CustomActivityForm } from '@/components/custom-activity-form';
 import { ActivityCard } from '@/components/activity-card';
-import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon } from 'lucide-react';
+import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon, SunDim } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -211,10 +211,11 @@ export function PocketActivitiesClient() {
     }
     if (weather) {
       return (
-        <div className="flex items-center space-x-4 text-sm">
+        <div className="flex items-center space-x-4 text-sm flex-wrap">
             <div className="flex items-center"><Thermometer className="mr-1.5 h-4 w-4 text-destructive" /> {weather.temperature}°F</div>
             <div className="flex items-center"><Cloud className="mr-1.5 h-4 w-4 text-blue-400" /> {weather.conditions}</div>
-            <div className="flex-1 text-muted-foreground">{weather.forecast}</div>
+            <div className="flex items-center"><SunDim className="mr-1.5 h-4 w-4 text-orange-400" /> UV: {weather.uvIndex}</div>
+            <div className="flex-1 text-muted-foreground mt-2 sm:mt-0 basis-full sm:basis-auto sm:text-right">{weather.forecast}</div>
         </div>
       )
     }
