@@ -41,7 +41,7 @@ export async function getSuggestionsAction(input: GenerateActivitySuggestionsInp
 export async function getWeatherAction(input: GetWeatherInput): Promise<GetWeatherOutput | { error: string }> {
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${input.latitude}&longitude=${input.longitude}&current=temperature_2m,weathercode,uv_index&hourly=temperature_2m,weathercode,precipitation_probability&temperature_unit=fahrenheit&timeformat=unixtime&forecast_days=1`;
-      const response = await fetch(url, { cache: 'no-store' });
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch weather data: ${response.statusText}`);
       }
@@ -84,7 +84,7 @@ export async function getSunriseSunsetAction(input: GetSunriseSunsetInput): Prom
     try {
        // Using a public, no-key-required API for sunrise/sunset
       const url = `https://api.sunrise-sunset.org/json?lat=${input.latitude}&lng=${input.longitude}&formatted=0`;
-      const response = await fetch(url, { cache: 'no-store' });
+      const response = await fetch(url);
        if (!response.ok) {
         throw new Error(`Failed to fetch sunrise/sunset data: ${response.statusText}`);
       }
