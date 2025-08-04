@@ -10,18 +10,17 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import type { GetSunriseSunsetInput, GetSunriseSunsetOutput } from '@/lib/types';
 
 const GetSunriseSunsetInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
   longitude: z.number().describe('The longitude of the location.'),
 });
-export type GetSunriseSunsetInput = z.infer<typeof GetSunriseSunsetInputSchema>;
 
 const GetSunriseSunsetOutputSchema = z.object({
     sunrise: z.string().describe('The sunrise time in ISO 8601 format.'),
     sunset: z.string().describe('The sunset time in ISO 8601 format.'),
 });
-export type GetSunriseSunsetOutput = z.infer<typeof GetSunriseSunsetOutputSchema>;
 
 
 const getSunriseSunsetTool = ai.defineTool(

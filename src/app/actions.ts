@@ -1,9 +1,9 @@
 'use server';
 
-import { generateActivitySuggestions, GenerateActivitySuggestionsInput } from '@/ai/flows/generate-activity-suggestions';
-import { getWeather, GetWeatherInput, GetWeatherOutput } from '@/ai/flows/get-weather';
-import { getSunriseSunset, GetSunriseSunsetInput, GetSunriseSunsetOutput } from '@/ai/flows/get-sunrise-sunset';
-import type { Activity } from '@/lib/types';
+import { generateActivitySuggestions } from '@/ai/flows/generate-activity-suggestions';
+import { getWeather } from '@/ai/flows/get-weather';
+import { getSunriseSunset } from '@/ai/flows/get-sunrise-sunset';
+import type { Activity, GenerateActivitySuggestionsInput, GetWeatherInput, GetWeatherOutput, GetSunriseSunsetInput, GetSunriseSunsetOutput } from '@/lib/types';
 
 export async function getSuggestionsAction(input: GenerateActivitySuggestionsInput): Promise<Activity[]> {
   try {

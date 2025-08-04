@@ -10,6 +10,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { GenerateActivitySuggestionsInput, GenerateActivitySuggestionsOutput } from '@/lib/types';
+
 
 const GenerateActivitySuggestionsInputSchema = z.object({
   availableTimeMinutes: z
@@ -19,9 +21,6 @@ const GenerateActivitySuggestionsInputSchema = z.object({
     .boolean()
     .describe('Whether the activity should require daylight or not.'),
 });
-export type GenerateActivitySuggestionsInput = z.infer<
-  typeof GenerateActivitySuggestionsInputSchema
->;
 
 const SuggestionSchema = z.object({
   activity: z.string().describe('The suggested activity.'),
@@ -33,9 +32,7 @@ const GenerateActivitySuggestionsOutputSchema = z.object({
     .array(SuggestionSchema)
     .describe('A list of activity suggestions.'),
 });
-export type GenerateActivitySuggestionsOutput = z.infer<
-  typeof GenerateActivitySuggestionsOutputSchema
->;
+
 
 export async function generateActivitySuggestions(
   input: GenerateActivitySuggestionsInput

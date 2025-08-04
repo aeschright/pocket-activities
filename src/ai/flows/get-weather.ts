@@ -10,19 +10,18 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import type { GetWeatherInput, GetWeatherOutput } from '@/lib/types';
 
 const GetWeatherInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
   longitude: z.number().describe('The longitude of the location.'),
 });
-export type GetWeatherInput = z.infer<typeof GetWeatherInputSchema>;
 
 const WeatherDataSchema = z.object({
   temperature: z.number().describe('The current temperature in Celsius.'),
   conditions: z.string().describe('A brief description of the current weather conditions (e.g., "Sunny", "Cloudy").'),
   forecast: z.string().describe('A short forecast for the next hour.'),
 });
-export type GetWeatherOutput = z.infer<typeof WeatherDataSchema>;
 
 const getWeatherTool = ai.defineTool(
   {
