@@ -45,7 +45,7 @@ export type GenerateActivitySuggestionsInput = z.infer<
 const SuggestionSchema = z.object({
   activity: z.string().describe('The suggested activity.'),
   duration: z.number().describe('The estimated duration of the activity in minutes.'),
-  weatherTip: z.optional(z.string()).describe("A helpful weather-related tip for the activity. For example, 'Wear sunscreen' if UV index is high, or 'Bring a raincoat' if rain is likely. Only provide a tip if it is relevant for an outdoor activity.")
+  weatherTip: z.optional(z.string()).describe("A helpful, detailed, and conversational weather-related tip for the activity. For example, 'With a high UV index, it's a good idea to wear sunscreen for this one.' or 'There's a chance of rain, so you might want to bring a raincoat.' Only provide a tip if it is relevant for an outdoor activity.")
 });
 
 const GenerateActivitySuggestionsOutputSchema = z.object({
