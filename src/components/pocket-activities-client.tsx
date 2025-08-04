@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CustomActivityForm } from '@/components/custom-activity-form';
 import { ActivityCard } from '@/components/activity-card';
-import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon, SunDim, Droplet } from 'lucide-react';
+import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon, SunDim, Droplet, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -157,21 +157,20 @@ export function PocketActivitiesClient() {
     }
   };
 
-  const filteredCustomActivities = useMemo(() => {
-    const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
-    if (!isClient) return [];
-    return customActivities.filter(activity =>
-        activity.duration <= timeInMinutes &&
-        (!daylightNeeded || activity.daylightNeeded)
-    );
-  }, [time, timeUnit, daylightNeeded, customActivities, isClient]);
+  const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
 
   const selectedCustomActivity = useMemo(() => {
     if (!selectedCustomActivityId) return null;
     return customActivities.find(act => act.id === selectedCustomActivityId) || null;
   }, [selectedCustomActivityId, customActivities]);
-
   
+  const selectedActivityFitsCriteria = useMemo(() => {
+    if (!selectedCustomActivity) return false;
+    const fitsTime = selectedCustomActivity.duration <= timeInMinutes;
+    const fitsDaylight = !daylightNeeded || selectedCustomActivity.daylightNeeded;
+    return fitsTime && fitsDaylight;
+  }, [selectedCustomActivity, timeInMinutes, daylightNeeded]);
+
   useEffect(() => {
     if (selectedCustomActivity?.daylightNeeded && !sunriseSunset) {
       getLocationAndFetchData();
@@ -200,7 +199,7 @@ export function PocketActivitiesClient() {
   }, [sunriseSunset]);
 
 
-  const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
+  
   const filteredSuggestedActivities = suggestions.filter(activity => 
     activity.duration <= timeInMinutes &&
     (!daylightNeeded || activity.daylightNeeded)
@@ -286,14 +285,14 @@ export function PocketActivitiesClient() {
                         <SelectValue placeholder="Select a custom activity..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {filteredCustomActivities.length > 0 ? (
-                          filteredCustomActivities.map(activity => (
+                        {customActivities.length > 0 ? (
+                          customActivities.map(activity => (
                             <SelectItem key={activity.id} value={activity.id}>
                               {activity.name} ({activity.duration} min)
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="none" disabled>No matching custom activities</SelectItem>
+                          <SelectItem value="none" disabled>No custom activities</SelectItem>
                         )}
                       </SelectContent>
                     </Select>
@@ -304,10 +303,6 @@ export function PocketActivitiesClient() {
                       checked={daylightNeeded}
                       onCheckedChange={(checked) => {
                         setDaylightNeeded(checked);
-                        // Reset sunrise/sunset data if daylight is no longer needed
-                        if (!checked) {
-                          setSunriseSunset(null);
-                        }
                       }}
                     />
                     <Label htmlFor="daylight-switch" className="text-base">Daylight</Label>
@@ -369,6 +364,14 @@ export function PocketActivitiesClient() {
                     <span>{selectedCustomActivity.daylightNeeded ? "Needs Daylight" : "Works at Night"}</span>
                 </div>
              </div>
+             
+             {!selectedActivityFitsCriteria && (
+                <div className="flex items-center text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
+                    <AlertTriangle className="mr-2 h-5 w-5" />
+                    <span>This activity doesn't fit your current "Available Time" or "Daylight" settings.</span>
+                </div>
+             )}
+
              {selectedCustomActivity.daylightNeeded && (
                 <div className="border-t pt-4 mt-4">
                     {isFetchingSunriseSunset ? (
