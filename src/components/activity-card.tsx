@@ -23,13 +23,57 @@ export function ActivityCard({ activity, onDelete, onEdit, onClick }: ActivityCa
         )}
         onClick={() => onClick?.(activity.id)}
       >
+        <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          {activity.isCustom && onEdit && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                  onClick={(e) => {
+                      e.stopPropagation(); // prevent card's onClick
+                      onEdit(activity.id)
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                  <span className="sr-only">Edit activity</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Edit Activity</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {activity.isCustom && onDelete && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                  onClick={(e) => {
+                      e.stopPropagation(); // prevent card's onClick
+                      onDelete(activity.id)
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Delete activity</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete Activity</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
         <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-          <CardTitle className="text-lg font-headline pr-16">{activity.name}</CardTitle>
-           <div className="flex items-center space-x-1">
+          <CardTitle className="text-lg font-headline pr-4">{activity.name}</CardTitle>
+           <div className="flex items-center space-x-1 shrink-0">
              {activity.isCustom && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <User className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <User className="h-5 w-5 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Custom Activity</p>
@@ -78,50 +122,6 @@ export function ActivityCard({ activity, onDelete, onEdit, onClick }: ActivityCa
             </Tooltip>
           )}
         </CardContent>
-        <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {activity.isCustom && onEdit && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
-                  onClick={(e) => {
-                      e.stopPropagation(); // prevent card's onClick
-                      onEdit(activity.id)
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                  <span className="sr-only">Edit activity</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Edit Activity</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {activity.isCustom && onDelete && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                  onClick={(e) => {
-                      e.stopPropagation(); // prevent card's onClick
-                      onDelete(activity.id)
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="sr-only">Delete activity</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Delete Activity</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
       </Card>
     </TooltipProvider>
   );
