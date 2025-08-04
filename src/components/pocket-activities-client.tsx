@@ -39,6 +39,7 @@ export function PocketActivitiesClient() {
   const [isFetchingSunriseSunset, setIsFetchingSunriseSunset] = useState(false);
 
   const [coords, setCoords] = useState<Coords | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const [selectedCustomActivityId, setSelectedCustomActivityId] = useState<string | null>(null);
   const [selectedSuggestedActivityId, setSelectedSuggestedActivityId] = useState<string | null>(null);
@@ -103,9 +104,11 @@ export function PocketActivitiesClient() {
         title: "Geolocation Not Supported",
         description: "Your browser does not support geolocation.",
       });
+      setLocationError("Geolocation is not supported by your browser.");
       return;
     }
   
+    setLocationError(null);
     setIsFetchingWeather(true);
     setIsFetchingSunriseSunset(true);
 
@@ -147,10 +150,12 @@ export function PocketActivitiesClient() {
       }
 
     }, (error) => {
+      const errorMsg = `Could not get your location: ${error.message}`;
+      setLocationError(errorMsg);
       toast({
         variant: "destructive",
         title: "Location Error",
-        description: `Could not get your location: ${error.message}`,
+        description: errorMsg,
       })
       setIsFetchingWeather(false);
       setIsFetchingSunriseSunset(false);
@@ -204,7 +209,7 @@ export function PocketActivitiesClient() {
   }, [selectedActivity, timeInMinutes, daylightNeeded]);
 
   useEffect(() => {
-    if (selectedActivity?.daylightNeeded && !sunriseSunset) {
+    if (selectedActivity?.daylightNeeded && !weather && !sunriseSunset) {
       getLocationAndFetchData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -415,6 +420,13 @@ export function PocketActivitiesClient() {
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
+             )}
+             
+             {selectedActivity.daylightNeeded && !selectedActivity.weatherTipLong && locationError && (
+                 <div className="flex items-center text-sm font-medium text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-md p-3 mt-4">
+                    <AlertTriangle className="mr-2 h-5 w-5" />
+                    <span>Click "Get My Weather" or grant location access to see relevant weather tips.</span>
+                </div>
              )}
 
              {!selectedActivityFitsCriteria && (
