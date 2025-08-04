@@ -87,14 +87,14 @@ export function PocketActivitiesClient() {
         if (weatherResult && 'error' in weatherResult) {
             toast({ variant: "destructive", title: "Weather Error", description: weatherResult.error });
             setWeather(null);
-        } else {
+        } else if (weatherResult) {
             setWeather(weatherResult as WeatherData);
         }
         
         if (sunriseSunsetResult && 'error' in sunriseSunsetResult) {
             toast({ variant: "destructive", title: "Sunrise/Sunset Error", description: sunriseSunsetResult.error });
             setSunriseSunset(null);
-        } else {
+        } else if (sunriseSunsetResult) {
             setSunriseSunset(sunriseSunsetResult as SunriseSunsetData);
         }
 
@@ -162,15 +162,18 @@ export function PocketActivitiesClient() {
 
   useEffect(() => {
     if (sunriseSunset?.sunset) {
-      const interval = setInterval(() => {
-        const sunsetDate = new Date(sunriseSunset.sunset);
+      const sunsetDate = new Date(sunriseSunset.sunset);
+      const updateSunset = () => {
         if (sunsetDate > new Date()) {
           setTimeToSunset(formatDistanceToNow(sunsetDate, { addSuffix: true }));
         } else {
           setTimeToSunset('Sunset has passed.');
-          clearInterval(interval);
+          if(interval) clearInterval(interval);
         }
-      }, 1000);
+      };
+
+      updateSunset();
+      const interval = setInterval(updateSunset, 1000 * 60); // Update every minute
       return () => clearInterval(interval);
     } else {
         setTimeToSunset(null);
