@@ -57,6 +57,8 @@ const generateActivitySuggestionsPrompt = ai.definePrompt({
 
 Each suggestion must have a duration that is less than or equal to the available time.
 
+If the available time is over 2 hours (120 minutes), all suggestions provided should be for activities that are at least 60 minutes long.
+
 {{#if daylightNeeded}}
 All suggestions must require daylight.
 {{else}}
