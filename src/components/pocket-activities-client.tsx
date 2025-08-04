@@ -278,7 +278,7 @@ export function PocketActivitiesClient() {
         </CardHeader>
         <CardContent className="grid gap-6">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 items-end gap-6">
-            <div className="space-y-2 lg:col-span-2">
+            <div className="space-y-2">
               <Label htmlFor="time-input">Available Time</Label>
               <div className="flex space-x-2">
                 <Input 
@@ -300,7 +300,16 @@ export function PocketActivitiesClient() {
                 </Select>
               </div>
             </div>
-            
+            <div className="flex items-center space-x-2 self-end pb-2.5">
+              <Switch 
+                id="daylight-switch"
+                checked={daylightNeeded}
+                onCheckedChange={(checked) => {
+                  setDaylightNeeded(checked);
+                }}
+              />
+              <Label htmlFor="daylight-switch" className="text-base">Daylight Only</Label>
+            </div>
             <div className="lg:col-span-3">
               <Button onClick={handleGetSuggestions} disabled={isPending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
@@ -319,8 +328,8 @@ export function PocketActivitiesClient() {
                         <SelectValue placeholder="Select a custom activity..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {filteredCustomActivities.length > 0 ? (
-                          filteredCustomActivities.map(activity => (
+                        {customActivities.length > 0 ? (
+                          customActivities.map(activity => (
                             <SelectItem key={activity.id} value={activity.id}>
                               {activity.name} ({formatDuration(activity.duration)})
                             </SelectItem>
@@ -330,16 +339,6 @@ export function PocketActivitiesClient() {
                         )}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch 
-                      id="daylight-switch"
-                      checked={daylightNeeded}
-                      onCheckedChange={(checked) => {
-                        setDaylightNeeded(checked);
-                      }}
-                    />
-                    <Label htmlFor="daylight-switch" className="text-base">Daylight</Label>
                   </div>
                </div>
             </div>
@@ -481,11 +480,12 @@ export function PocketActivitiesClient() {
             <div className="mt-8">
                 <h2 className="text-2xl font-headline font-bold mb-4">Your Custom Activities</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {customActivities.map(activity => (
+                {filteredCustomActivities.map(activity => (
                     <ActivityCard 
                         key={activity.id} 
                         activity={activity} 
                         onDelete={handleDeleteCustomActivity}
+                        onClick={() => handleCustomActivitySelect(activity.id)}
                     />
                 ))}
                 </div>
