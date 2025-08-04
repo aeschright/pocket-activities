@@ -1,7 +1,7 @@
 import type { Activity } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Sun, Moon, User, Trash2 } from 'lucide-react';
+import { Clock, Sun, Moon, User, Trash2, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
 interface ActivityCardProps {
@@ -27,7 +27,7 @@ export function ActivityCard({ activity, onDelete }: ActivityCardProps) {
           )}
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
             <div className="flex items-center">
               <Clock className="mr-1.5 h-4 w-4" />
               {activity.duration} min
@@ -46,6 +46,19 @@ export function ActivityCard({ activity, onDelete }: ActivityCardProps) {
               )}
             </div>
           </div>
+          {activity.weatherTip && (
+             <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="flex items-center text-sm text-accent-foreground border-t border-dashed border-accent/20 pt-2">
+                        <Info className="mr-1.5 h-4 w-4 text-accent" />
+                        <span>{activity.weatherTip}</span>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="start">
+                    <p>Based on current weather conditions.</p>
+                </TooltipContent>
+            </Tooltip>
+          )}
         </CardContent>
         {activity.isCustom && onDelete && (
           <Tooltip>

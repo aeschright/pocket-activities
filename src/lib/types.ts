@@ -6,6 +6,7 @@ export interface Activity {
   duration: number; // in minutes
   daylightNeeded: boolean;
   isCustom?: boolean;
+  weatherTip?: string;
 }
 
 export interface WeatherData {
@@ -13,6 +14,7 @@ export interface WeatherData {
     conditions: string;
     forecast: string;
     uvIndex: number;
+    precipitationProbability?: number;
 }
 
 export interface SunriseSunsetData {
@@ -31,6 +33,10 @@ const GenerateActivitySuggestionsInputSchema = z.object({
     .boolean()
     .describe('Whether the activity should require daylight or not.'),
   minutesToSunset: z.optional(z.number()).describe('Optional. The number of minutes until sunset. If not provided, the model should infer whether it is daytime or not using tools.'),
+  weather: z.optional(z.object({
+      uvIndex: z.number().describe('The current UV index.'),
+      precipitationProbability: z.number().describe('The probability of precipitation in the next hour, as a percentage.'),
+  })).describe('Optional. Current weather conditions to help generate tips.'),
 });
 export type GenerateActivitySuggestionsInput = z.infer<
   typeof GenerateActivitySuggestionsInputSchema
@@ -39,6 +45,7 @@ export type GenerateActivitySuggestionsInput = z.infer<
 const SuggestionSchema = z.object({
   activity: z.string().describe('The suggested activity.'),
   duration: z.number().describe('The estimated duration of the activity in minutes.'),
+  weatherTip: z.optional(z.string()).describe("A helpful weather-related tip for the activity. For example, 'Wear sunscreen' if UV index is high, or 'Bring a raincoat' if rain is likely. Only provide a tip if it is relevant for an outdoor activity.")
 });
 
 const GenerateActivitySuggestionsOutputSchema = z.object({
@@ -73,5 +80,6 @@ const WeatherDataSchema = z.object({
   conditions: z.string().describe('A brief description of the current weather conditions (e.g., "Sunny", "Cloudy").'),
   forecast: z.string().describe('A short forecast for the next hour.'),
   uvIndex: z.number().describe('The current UV index.'),
+  precipitationProbability: z.optional(z.number()).describe('The probability of precipitation in the next hour, as a percentage.'),
 });
 export type GetWeatherOutput = z.infer<typeof WeatherDataSchema>;

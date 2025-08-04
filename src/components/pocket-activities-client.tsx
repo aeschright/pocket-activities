@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CustomActivityForm } from '@/components/custom-activity-form';
 import { ActivityCard } from '@/components/activity-card';
-import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon, SunDim } from 'lucide-react';
+import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon, SunDim, Droplet } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -63,10 +63,19 @@ export function PocketActivitiesClient() {
         }
       }
 
+      let weatherPayload: { uvIndex: number, precipitationProbability: number } | undefined = undefined;
+      if (weather) {
+          weatherPayload = {
+              uvIndex: weather.uvIndex,
+              precipitationProbability: weather.precipitationProbability || 0,
+          }
+      }
+
       const result = await getSuggestionsAction({
         availableTimeMinutes: timeInMinutes,
         daylightNeeded: daylightNeeded,
         minutesToSunset: minutesToSunset,
+        weather: weatherPayload
       });
       setSuggestions(result);
     });
@@ -216,8 +225,11 @@ export function PocketActivitiesClient() {
                 <div className="flex items-center"><Thermometer className="mr-1.5 h-4 w-4 text-destructive" /> {weather.temperature}°F</div>
                 <div className="flex items-center"><Cloud className="mr-1.5 h-4 w-4 text-blue-400" /> {weather.conditions}</div>
                 <div className="flex items-center"><SunDim className="mr-1.5 h-4 w-4 text-orange-400" /> UV: {weather.uvIndex}</div>
+                {weather.precipitationProbability !== undefined && (
+                    <div className="flex items-center"><Droplet className="mr-1.5 h-4 w-4 text-cyan-400" /> {weather.precipitationProbability}% rain</div>
+                )}
             </div>
-            <div className="text-muted-foreground">{weather.forecast}</div>
+            <div className="text-muted-foreground pt-1">{weather.forecast}</div>
         </div>
       )
     }
@@ -379,7 +391,7 @@ export function PocketActivitiesClient() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {isPending ? (
               [...Array(3)].map((_, i) => (
-                <Card key={i}><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
+                <Card key={i}><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
               ))
             ) : filteredSuggestedActivities.length > 0 ? (
               filteredSuggestedActivities.map(activity => (
