@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, Sun, Moon, User, Trash2, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { cn, formatDuration } from '@/lib/utils';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -38,7 +38,7 @@ export function ActivityCard({ activity, onDelete, onClick }: ActivityCardProps)
           <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
             <div className="flex items-center">
               <Clock className="mr-1.5 h-4 w-4" />
-              {activity.duration} min
+              {formatDuration(activity.duration)}
             </div>
             <div className="flex items-center">
               {activity.daylightNeeded ? (

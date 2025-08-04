@@ -39,3 +39,12 @@ export function weatherCodeToString(code: number): string {
   };
   return codes[code] || 'Unknown';
 }
+
+export function formatDuration(minutes: number): string {
+  if (minutes > 90) {
+    const hours = (minutes / 60).toPrecision(2);
+    // use replace to remove trailing .0
+    return `${hours.replace(/\.0$/, '')} ${parseFloat(hours) === 1 ? 'hour' : 'hours'}`;
+  }
+  return `${minutes} min`;
+}

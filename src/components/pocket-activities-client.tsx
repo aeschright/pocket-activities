@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, differenceInMinutes } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { formatDuration } from '@/lib/utils';
 
 
 export function PocketActivitiesClient() {
@@ -321,7 +322,7 @@ export function PocketActivitiesClient() {
                         {filteredCustomActivities.length > 0 ? (
                           filteredCustomActivities.map(activity => (
                             <SelectItem key={activity.id} value={activity.id}>
-                              {activity.name} ({activity.duration} min)
+                              {activity.name} ({formatDuration(activity.duration)})
                             </SelectItem>
                           ))
                         ) : (
@@ -390,7 +391,7 @@ export function PocketActivitiesClient() {
              <div className="flex items-center space-x-6 text-muted-foreground">
                 <div className="flex items-center">
                     <Clock className="mr-2 h-5 w-5" />
-                    <span>{selectedActivity.duration} minutes</span>
+                    <span>{formatDuration(selectedActivity.duration)}</span>
                 </div>
                 <div className="flex items-center">
                     {selectedActivity.daylightNeeded ? (
