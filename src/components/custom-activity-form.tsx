@@ -30,7 +30,7 @@ const formSchema = z.object({
     message: "Duration seems a bit long, doesn't it?"
   }),
   daylightNeeded: z.boolean().default(false),
-  energyLevel: z.enum(["Tired", "Low Focus", "Ready to Go", "High Energy"]).optional(),
+  energyLevel: z.enum(["Any", "Tired", "Low Focus", "Ready to Go", "High Energy"]).optional(),
 });
 
 interface CustomActivityFormProps {
@@ -45,11 +45,16 @@ export function CustomActivityForm({ onAddActivity, onDone }: CustomActivityForm
       name: "",
       duration: 30,
       daylightNeeded: false,
+      energyLevel: "Any",
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddActivity(values);
+    const { energyLevel, ...rest } = values;
+    onAddActivity({
+        ...rest,
+        energyLevel: energyLevel === "Any" ? undefined : (energyLevel as EnergyLevel),
+    });
     form.reset();
     onDone();
   }
@@ -96,6 +101,7 @@ export function CustomActivityForm({ onAddActivity, onDone }: CustomActivityForm
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
+                  <SelectItem value="Any">Any</SelectItem>
                   <SelectItem value="Tired">Tired</SelectItem>
                   <SelectItem value="Low Focus">Low Focus</SelectItem>
                   <SelectItem value="Ready to Go">Ready to Go</SelectItem>
