@@ -316,17 +316,14 @@ export function PocketActivitiesClient() {
               weatherTipLong: result[0].weatherTipLong,
           };
           
-          if (selectedActivity.isCustom) {
-            const updatedActivity = { ...selectedActivity, ...updatedTip };
-            setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? updatedActivity : a));
-          } else {
-             const originalSuggestion = suggestions.find(s => s.id === selectedActivity.id);
-             if (originalSuggestion) {
-                const updatedSuggestion = {...originalSuggestion, ...updatedTip, id: originalSuggestion.id};
-                setSelectedSuggestedActivity(updatedSuggestion);
-                setSuggestions(prev => prev.map(s => s.id === updatedSuggestion.id ? updatedSuggestion : s));
-             }
-          }
+           if (selectedSuggestedActivity && selectedSuggestedActivity.id === selectedActivity.id) {
+             const updatedSuggestion = {...selectedSuggestedActivity, ...updatedTip};
+             setSelectedSuggestedActivity(updatedSuggestion);
+             setSuggestions(prev => prev.map(s => s.id === updatedSuggestion.id ? updatedSuggestion : s));
+           } else if (selectedCustomActivityId && selectedCustomActivityId === selectedActivity.id) {
+             const updatedActivity = { ...selectedActivity, ...updatedTip };
+             setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? updatedActivity : a));
+           }
         }
       });
     }
@@ -557,19 +554,19 @@ export function PocketActivitiesClient() {
              </div>
              
              {selectedActivity.weatherTipLong && (
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="flex items-center text-sm text-accent-foreground border-t border-dashed border-accent/20 pt-3 mt-3">
-                                <Info className="mr-1.5 h-4 w-4 text-accent" />
-                                <span>{selectedActivity.weatherTipLong}</span>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" align="start">
-                            <p>Based on current weather conditions.</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+                <div className="flex items-start text-sm text-accent border-t border-dashed border-accent/20 pt-3 mt-3">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Info className="mr-1.5 h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" align="start">
+                                <p>Based on current weather conditions.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <span>{selectedActivity.weatherTipLong}</span>
+                </div>
              )}
              
              {selectedActivity.daylightNeeded && !selectedActivity.weatherTipLong && (isFetchingWeather || isRefetchingSuggestion) && (
