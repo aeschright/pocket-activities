@@ -56,7 +56,7 @@ export function PocketActivitiesClient() {
   }, []);
 
   const [isPending, startTransition] = useTransition();
-  const [isRefetchingSuggestion, setIsRefetchingSuggestion] = useTransition();
+  const [isRefetchingSuggestion, startRefetchingSuggestion] = useTransition();
   
   const handleResetSelections = () => {
     setSelectedCustomActivityId(null);
@@ -228,13 +228,7 @@ export function PocketActivitiesClient() {
       
       // Only refetch if the weather tip could change.
       if (originalSuggestion && !originalSuggestion.weatherTipLong) {
-        setIsRefetchingSuggestion(async () => {
-          const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
-          let minutesToSunset: number | undefined = undefined;
-          if (sunriseSunset?.sunset) {
-            minutesToSunset = differenceInMinutes(new Date(sunriseSunset.sunset), new Date());
-          }
-
+        startRefetchingSuggestion(async () => {
           const weatherPayload = {
             uvIndex: weather.uvIndex,
             precipitationProbability: weather.precipitationProbability || 0,
@@ -242,16 +236,18 @@ export function PocketActivitiesClient() {
           
           // Let's ask for just one suggestion to update the current one
           const result = await getSuggestionsAction({
-            availableTimeMinutes: timeInMinutes,
-            daylightNeeded: selectedActivity.daylightNeeded,
-            minutesToSunset: minutesToSunset,
+            availableTimeMinutes: 0, // Not needed
+            daylightNeeded: false, // Not needed
+            activityToUpdate: {
+              name: selectedActivity.name,
+              duration: selectedActivity.duration,
+            },
             weather: weatherPayload,
-            coords: coords ?? undefined,
           });
 
           // Find a similar activity and update our selected one
-          const updatedSuggestion = result.find(r => r.name === selectedActivity.name);
-          if(updatedSuggestion) {
+          if(result.length > 0) {
+            const updatedSuggestion = result[0];
             setSelectedSuggestedActivity(updatedSuggestion);
           }
         });

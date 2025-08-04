@@ -31,6 +31,10 @@ const GenerateActivitySuggestionsInputSchema = z.object({
     latitude: z.number(),
     longitude: z.number(),
   })).describe('Optional. The user\'s coordinates. Needed for the isDaylight tool.'),
+  activityToUpdate: z.optional(z.object({
+    name: z.string(),
+    duration: z.number(),
+  })).describe('Optional. A single activity to re-evaluate and add a weather tip for.'),
 });
 
 const SuggestionSchema = z.object({
@@ -58,13 +62,32 @@ const generateActivitySuggestionsPrompt = ai.definePrompt({
   input: {schema: GenerateActivitySuggestionsInputSchema},
   output: {schema: GenerateActivitySuggestionsOutputSchema},
   tools: [isDaylight],
-  prompt: `You are an activity suggestion expert. A user has {{availableTimeMinutes}} minutes free.
+  prompt: `You are an activity suggestion expert.
+{{#if activityToUpdate}}
+A user wants an updated weather tip for the following activity:
+Activity: {{activityToUpdate.name}}
+Duration: {{activityToUpdate.duration}} minutes
+
+The activity is an outdoor activity. Use the weather information provided below to generate a 'weatherTipShort' and a 'weatherTipLong'.
+
+Current weather:
+- UV Index: {{weather.uvIndex}}
+- Chance of Rain (next hour): {{weather.precipitationProbability}}%
+
+- If the UV index is 3 or higher, the tip should be something like "With a high UV index, it's a good idea to wear sunscreen."
+- If the precipitation probability is 20% or higher, the tip should be something like "There's a chance of rain, so bringing a raincoat would be wise."
+- If both conditions are met, you can choose the most relevant tip or combine them.
+
+Return a JSON object with a single suggestion in the 'suggestions' array containing the original activity and duration, plus the new weather tips.
+
+{{else}}
+A user has {{availableTimeMinutes}} minutes free.
 
 Each suggestion must have a duration that is less than or equal to the available time.
 
 If the available time is over 2 hours (120 minutes), all suggestions provided should be for activities that are at least 60 minutes long.
 
-The user has not specified if they need daylight. 
+The user has not specified if they need daylight.
 {{#if minutesToSunset}}
 There are {{minutesToSunset}} minutes until sunset. If this is greater than 0, at least half of the suggestions should require daylight.
 {{else if coords}}
@@ -88,7 +111,8 @@ Current weather:
 {{/if}}
 
 Return a JSON object with a 'suggestions' key, which is an array of objects. Each object must have 'activity', 'duration', and optional 'weatherTipShort' and 'weatherTipLong' keys.
-Suggest between 3 and 5 activities.`,
+Suggest between 3 and 5 activities.
+{{/if}}`,
 });
 
 

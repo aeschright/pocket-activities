@@ -47,6 +47,10 @@ const GenerateActivitySuggestionsInputSchema = z.object({
     latitude: z.number(),
     longitude: z.number(),
   })).describe('Optional. The user\'s coordinates. Needed for the isDaylight tool.'),
+  activityToUpdate: z.optional(z.object({
+    name: z.string(),
+    duration: z.number(),
+  })).describe('Optional. A single activity to re-evaluate and add a weather tip for.'),
 });
 export type GenerateActivitySuggestionsInput = z.infer<
   typeof GenerateActivitySuggestionsInputSchema
