@@ -1,7 +1,7 @@
 import type { Activity } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Sun, Moon, User, Trash2, Info } from 'lucide-react';
+import { Clock, Sun, Globe, User, Trash2, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { cn, formatDuration } from '@/lib/utils';
 
@@ -48,8 +48,8 @@ export function ActivityCard({ activity, onDelete, onClick }: ActivityCardProps)
                 </>
               ) : (
                 <>
-                  <Moon className="mr-1.5 h-4 w-4 text-indigo-400" />
-                  <span>Works at night</span>
+                  <Globe className="mr-1.5 h-4 w-4 text-indigo-400" />
+                  <span>Do any time</span>
                 </>
               )}
             </div>

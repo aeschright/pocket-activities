@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CustomActivityForm } from '@/components/custom-activity-form';
 import { ActivityCard } from '@/components/activity-card';
-import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon, SunDim, Droplet, AlertTriangle, RefreshCw, Info } from 'lucide-react';
+import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Globe, SunDim, Droplet, AlertTriangle, RefreshCw, Info } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -461,9 +461,9 @@ export function PocketActivitiesClient() {
                     {selectedActivity.daylightNeeded ? (
                         <Sun className="mr-2 h-5 w-5 text-amber-500" />
                     ) : (
-                        <Moon className="mr-2 h-5 w-5 text-indigo-400" />
+                        <Globe className="mr-2 h-5 w-5 text-indigo-400" />
                     )}
-                    <span>{selectedActivity.daylightNeeded ? "Needs Daylight" : "Works at Night"}</span>
+                    <span>{selectedActivity.daylightNeeded ? "Needs Daylight" : "Do any time"}</span>
                 </div>
              </div>
              
