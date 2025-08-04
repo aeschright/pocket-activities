@@ -109,7 +109,7 @@ export function ActivityCard({ activity, onDelete, onEdit, onClick }: ActivityCa
             )}
           </div>
           {activity.weatherTipShort && (
-             <div className="flex items-center text-sm text-accent-foreground border-t border-dashed border-accent/20 pt-2">
+             <div className="flex items-center text-sm text-accent border-t border-dashed border-accent/20 pt-2">
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Info className="mr-1.5 h-4 w-4 text-accent flex-shrink-0" />
