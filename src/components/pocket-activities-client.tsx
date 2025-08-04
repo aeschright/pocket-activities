@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useTransition, useEffect } from 'react';
+import { useState, useMemo, useTransition, useEffect, useRef } from 'react';
 import type { Activity, WeatherData, SunriseSunsetData, Coords, EnergyLevel } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { getSuggestionsAction, getWeatherAction, getSunriseSunsetAction } from '@/app/actions';
@@ -35,6 +35,8 @@ export function PocketActivitiesClient() {
   
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isFetchingWeather, setIsFetchingWeather] = useState(false);
+  const [isFetchingSlow, setIsFetchingSlow] = useState(false);
+  const slowFetchTimer = useRef<NodeJS.Timeout | null>(null);
 
   const [sunriseSunset, setSunriseSunset] = useState<SunriseSunsetData | null>(null);
   const [isFetchingSunriseSunset, setIsFetchingSunriseSunset] = useState(false);
@@ -54,6 +56,13 @@ export function PocketActivitiesClient() {
 
   useEffect(() => {
     setIsClient(true);
+    
+    // Cleanup timer on unmount
+    return () => {
+      if (slowFetchTimer.current) {
+        clearTimeout(slowFetchTimer.current);
+      }
+    };
   }, []);
 
   const [isPending, startTransition] = useTransition();
@@ -135,6 +144,14 @@ export function PocketActivitiesClient() {
     setLocationError(null);
     setIsFetchingWeather(true);
     setIsFetchingSunriseSunset(true);
+    setIsFetchingSlow(false);
+
+    // Set a timer to show a "still fetching" message if it takes too long
+    if (slowFetchTimer.current) clearTimeout(slowFetchTimer.current);
+    slowFetchTimer.current = setTimeout(() => {
+        setIsFetchingSlow(true);
+    }, 15000);
+
 
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
@@ -170,11 +187,15 @@ export function PocketActivitiesClient() {
           setWeather(null);
           setSunriseSunset(null);
       } finally {
+        if (slowFetchTimer.current) clearTimeout(slowFetchTimer.current);
+        setIsFetchingSlow(false);
         setIsFetchingWeather(false);
         setIsFetchingSunriseSunset(false);
       }
 
     }, (error) => {
+      if (slowFetchTimer.current) clearTimeout(slowFetchTimer.current);
+      setIsFetchingSlow(false);
       const errorMsg = `Could not get your location: ${error.message}`;
       setLocationError(errorMsg);
       toast({
@@ -340,6 +361,7 @@ export function PocketActivitiesClient() {
           <div className="space-y-2">
             <Skeleton className="h-4 w-[150px]" />
             <Skeleton className="h-4 w-[200px]" />
+            {isFetchingSlow && <p className="text-sm text-muted-foreground pt-1">Still fetching...</p>}
           </div>
         </div>
       );
@@ -623,3 +645,5 @@ export function PocketActivitiesClient() {
     </div>
   );
 }
+
+    
