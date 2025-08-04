@@ -243,41 +243,47 @@ export function PocketActivitiesClient() {
   useEffect(() => {
      // If we have a selected activity and new weather data becomes available,
      // re-fetch the suggestion to get an updated weather tip.
-    if (selectedActivity && !selectedActivity.isCustom && weather && !isFetchingWeather) {
-      const originalSuggestion = suggestions.find(s => s.id === selectedActivity.id);
-      
-      // Only refetch if the weather tip could change.
-      if (originalSuggestion) {
-        startRefetchingSuggestion(async () => {
-          const weatherPayload = {
-            uvIndex: weather.uvIndex,
-            precipitationProbability: weather.precipitationProbability || 0,
-          };
-          
-          // Let's ask for just one suggestion to update the current one
-          const result = await getSuggestionsAction({
-            availableTimeMinutes: 0, // Not needed
-            daylightNeeded: false, // Not needed
-            activityToUpdate: {
-              name: selectedActivity.name,
-              duration: selectedActivity.duration,
-            },
-            weather: weatherPayload,
-          });
-
-          // Find a similar activity and update our selected one
-          if(result.length > 0) {
-            const updatedSuggestion = {...result[0], id: originalSuggestion.id};
-            setSelectedSuggestedActivity(updatedSuggestion);
-
-            // Also update the main suggestions list to ensure consistency
-            setSuggestions(prev => prev.map(s => s.id === updatedSuggestion.id ? updatedSuggestion : s));
-          }
+    if (selectedActivity && selectedActivity.daylightNeeded && weather && !isFetchingWeather) {
+      startRefetchingSuggestion(async () => {
+        const weatherPayload = {
+          uvIndex: weather.uvIndex,
+          precipitationProbability: weather.precipitationProbability || 0,
+        };
+        
+        const result = await getSuggestionsAction({
+          availableTimeMinutes: 0,
+          daylightNeeded: false,
+          activityToUpdate: {
+            name: selectedActivity.name,
+            duration: selectedActivity.duration,
+          },
+          weather: weatherPayload,
         });
-      }
+
+        if(result.length > 0) {
+          const updatedTip = {
+              weatherTipShort: result[0].weatherTipShort,
+              weatherTipLong: result[0].weatherTipLong,
+          };
+
+          if (selectedActivity.isCustom) {
+            const updatedActivity = { ...selectedActivity, ...updatedTip };
+            // Update the main custom activities list as well to persist the tip
+            setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? updatedActivity : a));
+            // This will trigger a re-render because the selectedActivity from the memo will be updated
+          } else {
+             const originalSuggestion = suggestions.find(s => s.id === selectedActivity.id);
+             if (originalSuggestion) {
+                const updatedSuggestion = {...originalSuggestion, ...updatedTip, id: originalSuggestion.id};
+                setSelectedSuggestedActivity(updatedSuggestion);
+                setSuggestions(prev => prev.map(s => s.id === updatedSuggestion.id ? updatedSuggestion : s));
+             }
+          }
+        }
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weather, isFetchingWeather]);
+  }, [weather, isFetchingWeather, selectedActivity]);
 
   useEffect(() => {
     if (sunriseSunset?.sunset) {
