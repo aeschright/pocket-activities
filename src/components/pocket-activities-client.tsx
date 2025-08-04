@@ -55,6 +55,7 @@ export function PocketActivitiesClient() {
     setSelectedCustomActivityId(null);
     setSelectedSuggestedActivityId(null);
     setSuggestions([]);
+    setHasSearched(false);
   };
 
   const handleGetSuggestions = () => {
