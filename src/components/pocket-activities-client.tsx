@@ -245,7 +245,7 @@ export function PocketActivitiesClient() {
         </CardHeader>
         <CardContent className="grid gap-6">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 items-end gap-6">
-            <div className="space-y-2">
+            <div className="space-y-2 lg:col-span-2">
               <Label htmlFor="time-input">Available Time</Label>
               <div className="flex space-x-2">
                 <Input 
@@ -267,20 +267,7 @@ export function PocketActivitiesClient() {
                 </Select>
               </div>
             </div>
-            <div className="flex items-center space-x-3 pb-2">
-              <Switch 
-                id="daylight-switch"
-                checked={daylightNeeded}
-                onCheckedChange={(checked) => {
-                  setDaylightNeeded(checked);
-                  // Reset sunrise/sunset data if daylight is no longer needed
-                  if (!checked) {
-                    setSunriseSunset(null);
-                  }
-                }}
-              />
-              <Label htmlFor="daylight-switch" className="text-base">Needs Daylight</Label>
-            </div>
+            
             <div className="lg:col-span-3">
               <Button onClick={handleGetSuggestions} disabled={isPending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
@@ -292,22 +279,40 @@ export function PocketActivitiesClient() {
           {isClient && customActivities.length > 0 && (
              <div className="space-y-4 border-t pt-6">
               <Label>Or pick one of your activities</Label>
-               <Select onValueChange={setSelectedCustomActivityId} value={selectedCustomActivityId || ""}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a custom activity..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredCustomActivities.length > 0 ? (
-                      filteredCustomActivities.map(activity => (
-                        <SelectItem key={activity.id} value={activity.id}>
-                          {activity.name} ({activity.duration} min)
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="none" disabled>No matching custom activities</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+               <div className="flex items-center gap-4">
+                 <div className="flex-1">
+                    <Select onValueChange={setSelectedCustomActivityId} value={selectedCustomActivityId || ""}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a custom activity..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredCustomActivities.length > 0 ? (
+                          filteredCustomActivities.map(activity => (
+                            <SelectItem key={activity.id} value={activity.id}>
+                              {activity.name} ({activity.duration} min)
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="none" disabled>No matching custom activities</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      id="daylight-switch"
+                      checked={daylightNeeded}
+                      onCheckedChange={(checked) => {
+                        setDaylightNeeded(checked);
+                        // Reset sunrise/sunset data if daylight is no longer needed
+                        if (!checked) {
+                          setSunriseSunset(null);
+                        }
+                      }}
+                    />
+                    <Label htmlFor="daylight-switch" className="text-base">Daylight</Label>
+                  </div>
+               </div>
             </div>
           )}
 
