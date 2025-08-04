@@ -11,3 +11,8 @@ export interface WeatherData {
     conditions: string;
     forecast: string;
 }
+
+export interface SunriseSunsetData {
+    sunrise: string;
+    sunset: string;
+}

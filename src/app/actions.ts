@@ -2,6 +2,7 @@
 
 import { generateActivitySuggestions, GenerateActivitySuggestionsInput } from '@/ai/flows/generate-activity-suggestions';
 import { getWeather, GetWeatherInput, GetWeatherOutput } from '@/ai/flows/get-weather';
+import { getSunriseSunset, GetSunriseSunsetInput, GetSunriseSunsetOutput } from '@/ai/flows/get-sunrise-sunset';
 import type { Activity } from '@/lib/types';
 
 export async function getSuggestionsAction(input: GenerateActivitySuggestionsInput): Promise<Activity[]> {
@@ -32,5 +33,15 @@ export async function getWeatherAction(input: GetWeatherInput): Promise<GetWeath
     } catch (error) {
         console.error('Error getting weather:', error);
         return { error: 'Failed to get weather data.' };
+    }
+}
+
+export async function getSunriseSunsetAction(input: GetSunriseSunsetInput): Promise<GetSunriseSunsetOutput | { error: string }> {
+    try {
+        const result = await getSunriseSunset(input);
+        return result;
+    } catch (error) {
+        console.error('Error getting sunrise/sunset data:', error);
+        return { error: 'Failed to get sunrise/sunset data.' };
     }
 }

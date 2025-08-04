@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo, useTransition, useEffect } from 'react';
-import type { Activity, WeatherData } from '@/lib/types';
+import type { Activity, WeatherData, SunriseSunsetData } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { getSuggestionsAction, getWeatherAction } from '@/app/actions';
+import { getSuggestionsAction, getWeatherAction, getSunriseSunsetAction } from '@/app/actions';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +13,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CustomActivityForm } from '@/components/custom-activity-form';
 import { ActivityCard } from '@/components/activity-card';
-import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Wind, Cloud } from 'lucide-react';
+import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { formatDistanceToNow } from 'date-fns';
 
 
 export function PocketActivitiesClient() {
@@ -30,6 +31,14 @@ export function PocketActivitiesClient() {
   
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isFetchingWeather, setIsFetchingWeather] = useState(false);
+
+  const [sunriseSunset, setSunriseSunset] = useState<SunriseSunsetData | null>(null);
+  const [isFetchingSunriseSunset, setIsFetchingSunriseSunset] = useState(false);
+
+  const [selectedCustomActivityId, setSelectedCustomActivityId] = useState<string | null>(null);
+  const [timeToSunset, setTimeToSunset] = useState<string | null>(null);
+
+
   const { toast } = useToast();
 
   const [isClient, setIsClient] = useState(false);
@@ -38,11 +47,11 @@ export function PocketActivitiesClient() {
     setIsClient(true);
   }, []);
 
-
   const [isPending, startTransition] = useTransition();
 
   const handleGetSuggestions = () => {
     setHasSearched(true);
+    setSelectedCustomActivityId(null);
     startTransition(async () => {
       const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
       const result = await getSuggestionsAction({
@@ -53,21 +62,40 @@ export function PocketActivitiesClient() {
     });
   };
   
-  const handleGetWeather = () => {
-    setIsFetchingWeather(true);
+  const getLocationAndFetchData = () => {
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
-      const result = await getWeatherAction({ latitude, longitude });
-      if ('error' in result) {
+      
+      // Fetch Weather
+      setIsFetchingWeather(true);
+      const weatherResult = await getWeatherAction({ latitude, longitude });
+      if ('error' in weatherResult) {
         toast({
           variant: "destructive",
-          title: "Error",
-          description: result.error,
+          title: "Weather Error",
+          description: weatherResult.error,
         })
       } else {
-        setWeather(result);
+        setWeather(weatherResult);
       }
       setIsFetchingWeather(false);
+      
+      // Fetch Sunrise/Sunset
+      if (daylightNeeded || selectedCustomActivity?.daylightNeeded) {
+        setIsFetchingSunriseSunset(true);
+        const sunriseSunsetResult = await getSunriseSunsetAction({ latitude, longitude });
+        if ('error' in sunriseSunsetResult) {
+            toast({
+                variant: "destructive",
+                title: "Sunrise/Sunset Error",
+                description: sunriseSunsetResult.error,
+            })
+        } else {
+            setSunriseSunset(sunriseSunsetResult);
+        }
+        setIsFetchingSunriseSunset(false);
+      }
+
     }, (error) => {
       console.error("Geolocation error:", error);
       toast({
@@ -76,6 +104,7 @@ export function PocketActivitiesClient() {
         description: "Could not get your location. Please ensure location services are enabled.",
       })
       setIsFetchingWeather(false);
+      setIsFetchingSunriseSunset(false);
     });
   };
 
@@ -90,6 +119,9 @@ export function PocketActivitiesClient() {
   
   const handleDeleteCustomActivity = (idToDelete: string) => {
     setCustomActivities(prev => prev.filter(activity => activity.id !== idToDelete));
+    if (selectedCustomActivityId === idToDelete) {
+      setSelectedCustomActivityId(null);
+    }
   };
 
   const filteredCustomActivities = useMemo(() => {
@@ -100,6 +132,34 @@ export function PocketActivitiesClient() {
         (!daylightNeeded || activity.daylightNeeded)
     );
   }, [time, timeUnit, daylightNeeded, customActivities, isClient]);
+
+  const selectedCustomActivity = useMemo(() => {
+    if (!selectedCustomActivityId) return null;
+    return customActivities.find(act => act.id === selectedCustomActivityId) || null;
+  }, [selectedCustomActivityId, customActivities]);
+
+  
+  useEffect(() => {
+    if (selectedCustomActivity?.daylightNeeded && !sunriseSunset) {
+      getLocationAndFetchData();
+    }
+  }, [selectedCustomActivity, sunriseSunset]);
+
+  useEffect(() => {
+    if (sunriseSunset?.sunset) {
+      const interval = setInterval(() => {
+        const sunsetDate = new Date(sunriseSunset.sunset);
+        if (sunsetDate > new Date()) {
+          setTimeToSunset(formatDistanceToNow(sunsetDate, { addSuffix: true }));
+        } else {
+          setTimeToSunset('Sunset has passed.');
+          clearInterval(interval);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [sunriseSunset]);
+
 
   const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
   const filteredSuggestedActivities = suggestions.filter(activity => 
@@ -179,9 +239,9 @@ export function PocketActivitiesClient() {
           </div>
 
           {isClient && customActivities.length > 0 && (
-            <div className="space-y-4 border-t pt-6">
-               <Label>Or pick a custom activity</Label>
-               <Select>
+             <div className="space-y-4 border-t pt-6">
+              <Label>Or pick one of your activities</Label>
+               <Select onValueChange={setSelectedCustomActivityId} value={selectedCustomActivityId || ""}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a custom activity..." />
                   </SelectTrigger>
@@ -221,7 +281,7 @@ export function PocketActivitiesClient() {
           </Sheet>
 
           <div className="border-t pt-4 mt-4 flex flex-col sm:flex-row items-center gap-4">
-            <Button onClick={handleGetWeather} disabled={isFetchingWeather} variant="outline">
+            <Button onClick={getLocationAndFetchData} disabled={isFetchingWeather} variant="outline">
               {isFetchingWeather ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LocateIcon className="mr-2 h-4 w-4" />}
               Get My Weather
             </Button>
@@ -231,6 +291,47 @@ export function PocketActivitiesClient() {
           </div>
         </CardContent>
       </Card>
+
+      {selectedCustomActivity && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline text-2xl">Activity Preview</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+             <h3 className="text-xl font-semibold">{selectedCustomActivity.name}</h3>
+             <div className="flex items-center space-x-6 text-muted-foreground">
+                <div className="flex items-center">
+                    <Clock className="mr-2 h-5 w-5" />
+                    <span>{selectedCustomActivity.duration} minutes</span>
+                </div>
+                <div className="flex items-center">
+                    {selectedCustomActivity.daylightNeeded ? (
+                        <Sun className="mr-2 h-5 w-5 text-amber-500" />
+                    ) : (
+                        <Moon className="mr-2 h-5 w-5 text-indigo-400" />
+                    )}
+                    <span>{selectedCustomActivity.daylightNeeded ? "Needs Daylight" : "Works at Night"}</span>
+                </div>
+             </div>
+             {selectedCustomActivity.daylightNeeded && (
+                <div className="border-t pt-4 mt-4">
+                    {isFetchingSunriseSunset ? (
+                         <div className="flex items-center space-x-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Fetching sunset time...</span>
+                         </div>
+                    ) : timeToSunset ? (
+                        <p className="text-sm text-accent-foreground font-medium">
+                            Time until sunset: {timeToSunset}
+                        </p>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">Could not determine sunset time.</p>
+                    )}
+                </div>
+             )}
+          </CardContent>
+        </Card>
+      )}
       
       <div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
