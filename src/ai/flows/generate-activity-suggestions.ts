@@ -50,7 +50,7 @@ const generateActivitySuggestionsPrompt = ai.definePrompt({
   prompt: `You are an activity suggestion expert. A user has {{availableTimeMinutes}} minutes free and {{#if daylightNeeded}}needs daylight{{else}}does not need daylight{{/if}}. Suggest some activities they can do.
 
 Each suggestion must have a duration that is less than or equal to the available time.
-Return a JSON object with a 'suggestions' key, which is an array of objects. Each object should have 'activity' and 'duration' keys.
+Return a JSON object with a 'suggestions' key, which is an array of objects. Each object must have 'activity' and 'duration' keys. The duration must be a number representing minutes.
 Suggest between 3 and 5 activities.`,
 });
 
