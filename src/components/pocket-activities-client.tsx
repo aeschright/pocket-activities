@@ -211,11 +211,13 @@ export function PocketActivitiesClient() {
     }
     if (weather) {
       return (
-        <div className="flex items-center space-x-4 text-sm flex-wrap">
-            <div className="flex items-center"><Thermometer className="mr-1.5 h-4 w-4 text-destructive" /> {weather.temperature}°F</div>
-            <div className="flex items-center"><Cloud className="mr-1.5 h-4 w-4 text-blue-400" /> {weather.conditions}</div>
-            <div className="flex items-center"><SunDim className="mr-1.5 h-4 w-4 text-orange-400" /> UV: {weather.uvIndex}</div>
-            <div className="flex-1 text-muted-foreground mt-2 sm:mt-0 basis-full sm:basis-auto sm:text-right">{weather.forecast}</div>
+        <div className="text-sm space-y-1">
+            <div className="flex items-center space-x-4 flex-wrap">
+                <div className="flex items-center"><Thermometer className="mr-1.5 h-4 w-4 text-destructive" /> {weather.temperature}°F</div>
+                <div className="flex items-center"><Cloud className="mr-1.5 h-4 w-4 text-blue-400" /> {weather.conditions}</div>
+                <div className="flex items-center"><SunDim className="mr-1.5 h-4 w-4 text-orange-400" /> UV: {weather.uvIndex}</div>
+            </div>
+            <div className="text-muted-foreground">{weather.forecast}</div>
         </div>
       )
     }
