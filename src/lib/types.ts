@@ -5,3 +5,9 @@ export interface Activity {
   daylightNeeded: boolean;
   isCustom?: boolean;
 }
+
+export interface WeatherData {
+    temperature: number;
+    conditions: string;
+    forecast: string;
+}
