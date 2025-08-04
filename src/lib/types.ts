@@ -67,7 +67,7 @@ const GetWeatherInputSchema = z.object({
 export type GetWeatherInput = z.infer<typeof GetWeatherInputSchema>;
 
 const WeatherDataSchema = z.object({
-  temperature: z.number().describe('The current temperature in Celsius.'),
+  temperature: z.number().describe('The current temperature in Fahrenheit.'),
   conditions: z.string().describe('A brief description of the current weather conditions (e.g., "Sunny", "Cloudy").'),
   forecast: z.string().describe('A short forecast for the next hour.'),
 });

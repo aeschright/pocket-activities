@@ -18,7 +18,7 @@ const GetWeatherInputSchema = z.object({
 });
 
 const WeatherDataSchema = z.object({
-  temperature: z.number().describe('The current temperature in Celsius.'),
+  temperature: z.number().describe('The current temperature in Fahrenheit.'),
   conditions: z.string().describe('A brief description of the current weather conditions (e.g., "Sunny", "Cloudy").'),
   forecast: z.string().describe('A short forecast for the next hour.'),
 });
@@ -32,7 +32,7 @@ const getWeatherTool = ai.defineTool(
   },
   async (input) => {
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${input.latitude}&longitude=${input.longitude}&current_weather=true&hourly=temperature_2m,weathercode`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${input.latitude}&longitude=${input.longitude}&current_weather=true&hourly=temperature_2m,weathercode&temperature_unit=fahrenheit`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch weather data: ${response.statusText}`);

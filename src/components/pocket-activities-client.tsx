@@ -89,7 +89,7 @@ export function PocketActivitiesClient() {
           });
           setWeather(null);
         } else {
-          setWeather(weatherResult);
+          setWeather(weatherResult as WeatherData);
         }
       } catch (e: any) {
          toast({
@@ -114,7 +114,7 @@ export function PocketActivitiesClient() {
               });
               setSunriseSunset(null);
           } else {
-              setSunriseSunset(sunriseSunsetResult);
+              setSunriseSunset(sunriseSunsetResult as SunriseSunsetData);
           }
         } catch(e: any) {
            toast({
@@ -128,6 +128,7 @@ export function PocketActivitiesClient() {
         }
       } else {
         setIsFetchingSunriseSunset(false);
+        setSunriseSunset(null);
       }
 
     }, (error) => {
@@ -218,7 +219,7 @@ export function PocketActivitiesClient() {
     if (weather) {
       return (
         <div className="flex items-center space-x-4 text-sm">
-            <div className="flex items-center"><Thermometer className="mr-1.5 h-4 w-4 text-destructive" /> {weather.temperature}°C</div>
+            <div className="flex items-center"><Thermometer className="mr-1.5 h-4 w-4 text-destructive" /> {weather.temperature}°F</div>
             <div className="flex items-center"><Cloud className="mr-1.5 h-4 w-4 text-blue-400" /> {weather.conditions}</div>
             <div className="flex-1 text-muted-foreground">{weather.forecast}</div>
         </div>
