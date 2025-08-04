@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CustomActivityForm } from '@/components/custom-activity-form';
 import { ActivityCard } from '@/components/activity-card';
-import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon, SunDim, Droplet, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Moon, SunDim, Droplet, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +36,8 @@ export function PocketActivitiesClient() {
   const [isFetchingSunriseSunset, setIsFetchingSunriseSunset] = useState(false);
 
   const [selectedCustomActivityId, setSelectedCustomActivityId] = useState<string | null>(null);
+  const [selectedSuggestedActivityId, setSelectedSuggestedActivityId] = useState<string | null>(null);
+
   const [timeToSunset, setTimeToSunset] = useState<string | null>(null);
 
 
@@ -48,10 +50,15 @@ export function PocketActivitiesClient() {
   }, []);
 
   const [isPending, startTransition] = useTransition();
+  
+  const handleResetSelections = () => {
+    setSelectedCustomActivityId(null);
+    setSelectedSuggestedActivityId(null);
+  };
 
   const handleGetSuggestions = () => {
     setHasSearched(true);
-    setSelectedCustomActivityId(null);
+    handleResetSelections();
     startTransition(async () => {
       const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
       
@@ -97,11 +104,11 @@ export function PocketActivitiesClient() {
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
       
-      const weatherPromise = getWeatherAction({ latitude, longitude });
-      const sunriseSunsetPromise = getSunriseSunsetAction({ latitude, longitude });
-
       try {
-        const [weatherResult, sunriseSunsetResult] = await Promise.all([weatherPromise, sunriseSunsetPromise]);
+        const [weatherResult, sunriseSunsetResult] = await Promise.all([
+            getWeatherAction({ latitude, longitude }),
+            getSunriseSunsetAction({ latitude, longitude })
+        ]);
 
         if (weatherResult && 'error' in weatherResult) {
             toast({ variant: "destructive", title: "Weather Error", description: weatherResult.error });
@@ -157,26 +164,42 @@ export function PocketActivitiesClient() {
     }
   };
 
-  const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
+  const handleSuggestedActivitySelect = (id: string) => {
+    setSelectedSuggestedActivityId(id);
+    setSelectedCustomActivityId(null); // Clear custom selection
+  };
 
-  const selectedCustomActivity = useMemo(() => {
-    if (!selectedCustomActivityId) return null;
-    return customActivities.find(act => act.id === selectedCustomActivityId) || null;
-  }, [selectedCustomActivityId, customActivities]);
+  const handleCustomActivitySelect = (id: string) => {
+    setSelectedCustomActivityId(id);
+    setSelectedSuggestedActivityId(null); // Clear suggested selection
+  }
+
+  const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
+  
+  const selectedActivity = useMemo(() => {
+    if (selectedSuggestedActivityId) {
+        return suggestions.find(act => act.id === selectedSuggestedActivityId) || null;
+    }
+    if (selectedCustomActivityId) {
+        return customActivities.find(act => act.id === selectedCustomActivityId) || null;
+    }
+    return null;
+  }, [selectedSuggestedActivityId, selectedCustomActivityId, suggestions, customActivities]);
+
   
   const selectedActivityFitsCriteria = useMemo(() => {
-    if (!selectedCustomActivity) return false;
-    const fitsTime = selectedCustomActivity.duration <= timeInMinutes;
-    const fitsDaylight = !daylightNeeded || selectedCustomActivity.daylightNeeded;
+    if (!selectedActivity) return false;
+    const fitsTime = selectedActivity.duration <= timeInMinutes;
+    const fitsDaylight = !daylightNeeded || selectedActivity.daylightNeeded;
     return fitsTime && fitsDaylight;
-  }, [selectedCustomActivity, timeInMinutes, daylightNeeded]);
+  }, [selectedActivity, timeInMinutes, daylightNeeded]);
 
   useEffect(() => {
-    if (selectedCustomActivity?.daylightNeeded && !sunriseSunset) {
+    if (selectedActivity?.daylightNeeded && !sunriseSunset) {
       getLocationAndFetchData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCustomActivity]);
+  }, [selectedActivity]);
 
   useEffect(() => {
     if (sunriseSunset?.sunset) {
@@ -280,7 +303,7 @@ export function PocketActivitiesClient() {
               <Label>Or pick one of your activities</Label>
                <div className="flex items-center gap-4">
                  <div className="flex-1">
-                    <Select onValueChange={setSelectedCustomActivityId} value={selectedCustomActivityId || ""}>
+                    <Select onValueChange={handleCustomActivitySelect} value={selectedCustomActivityId || ""}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a custom activity..." />
                       </SelectTrigger>
@@ -343,25 +366,29 @@ export function PocketActivitiesClient() {
         </CardContent>
       </Card>
 
-      {selectedCustomActivity && (
+      {selectedActivity && (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="font-headline text-2xl">Activity Preview</CardTitle>
+            <Button onClick={handleResetSelections} variant="ghost" size="sm">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Reset
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
-             <h3 className="text-xl font-semibold">{selectedCustomActivity.name}</h3>
+             <h3 className="text-xl font-semibold">{selectedActivity.name}</h3>
              <div className="flex items-center space-x-6 text-muted-foreground">
                 <div className="flex items-center">
                     <Clock className="mr-2 h-5 w-5" />
-                    <span>{selectedCustomActivity.duration} minutes</span>
+                    <span>{selectedActivity.duration} minutes</span>
                 </div>
                 <div className="flex items-center">
-                    {selectedCustomActivity.daylightNeeded ? (
+                    {selectedActivity.daylightNeeded ? (
                         <Sun className="mr-2 h-5 w-5 text-amber-500" />
                     ) : (
                         <Moon className="mr-2 h-5 w-5 text-indigo-400" />
                     )}
-                    <span>{selectedCustomActivity.daylightNeeded ? "Needs Daylight" : "Works at Night"}</span>
+                    <span>{selectedActivity.daylightNeeded ? "Needs Daylight" : "Works at Night"}</span>
                 </div>
              </div>
              
@@ -372,7 +399,7 @@ export function PocketActivitiesClient() {
                 </div>
              )}
 
-             {selectedCustomActivity.daylightNeeded && (
+             {selectedActivity.daylightNeeded && (
                 <div className="border-t pt-4 mt-4">
                     {isFetchingSunriseSunset ? (
                          <div className="flex items-center space-x-2">
@@ -395,47 +422,50 @@ export function PocketActivitiesClient() {
         </Card>
       )}
       
-      <div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {isPending ? (
-              [...Array(3)].map((_, i) => (
-                <Card key={i}><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
-              ))
-            ) : filteredSuggestedActivities.length > 0 ? (
-              filteredSuggestedActivities.map(activity => (
-                <ActivityCard 
-                  key={activity.id} 
-                  activity={activity} 
-                />
-              ))
-            ) : hasSearched ? (
-              <div className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg">
-                <h3 className="text-xl font-semibold text-muted-foreground">No suggested activities found</h3>
-                <p className="mt-2 text-muted-foreground">Try adjusting your time or daylight filter.</p>
-              </div>
-            ) : !isClient || customActivities.length === 0 ? (
-               <div className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg bg-card">
-                 <Sparkles className="mx-auto h-12 w-12 text-accent" />
-                <h3 className="mt-4 text-xl font-semibold text-foreground">Ready for an adventure?</h3>
-                <p className="mt-2 text-muted-foreground">Click "Suggest" to get your first batch of ideas or add a custom one!</p>
-              </div>
-            ) : null}
-        </div>
-        {isClient && customActivities.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-headline font-bold mb-4">Your Custom Activities</h2>
+      {!selectedActivity && (
+        <div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {customActivities.map(activity => (
-                  <ActivityCard 
+                {isPending ? (
+                [...Array(3)].map((_, i) => (
+                    <Card key={i}><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
+                ))
+                ) : filteredSuggestedActivities.length > 0 ? (
+                filteredSuggestedActivities.map(activity => (
+                    <ActivityCard 
                     key={activity.id} 
                     activity={activity} 
-                    onDelete={handleDeleteCustomActivity}
-                  />
-              ))}
+                    onClick={() => handleSuggestedActivitySelect(activity.id)}
+                    />
+                ))
+                ) : hasSearched ? (
+                <div className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg">
+                    <h3 className="text-xl font-semibold text-muted-foreground">No suggested activities found</h3>
+                    <p className="mt-2 text-muted-foreground">Try adjusting your time or daylight filter.</p>
+                </div>
+                ) : !isClient || customActivities.length === 0 ? (
+                <div className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg bg-card">
+                    <Sparkles className="mx-auto h-12 w-12 text-accent" />
+                    <h3 className="mt-4 text-xl font-semibold text-foreground">Ready for an adventure?</h3>
+                    <p className="mt-2 text-muted-foreground">Click "Suggest" to get your first batch of ideas or add a custom one!</p>
+                </div>
+                ) : null}
             </div>
-          </div>
-        )}
-      </div>
+            {isClient && customActivities.length > 0 && (
+            <div className="mt-8">
+                <h2 className="text-2xl font-headline font-bold mb-4">Your Custom Activities</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {customActivities.map(activity => (
+                    <ActivityCard 
+                        key={activity.id} 
+                        activity={activity} 
+                        onDelete={handleDeleteCustomActivity}
+                    />
+                ))}
+                </div>
+            </div>
+            )}
+        </div>
+      )}
     </div>
   );
 }

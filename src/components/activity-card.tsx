@@ -3,16 +3,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, Sun, Moon, User, Trash2, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface ActivityCardProps {
   activity: Activity;
   onDelete?: (id: string) => void;
+  onClick?: (id: string) => void;
 }
 
-export function ActivityCard({ activity, onDelete }: ActivityCardProps) {
+export function ActivityCard({ activity, onDelete, onClick }: ActivityCardProps) {
   return (
     <TooltipProvider>
-      <Card className="group relative bg-card/90 backdrop-blur-sm transition-all hover:shadow-accent/20 hover:shadow-lg hover:-translate-y-1">
+      <Card 
+        className={cn(
+            "group relative bg-card/90 backdrop-blur-sm transition-all hover:shadow-accent/20 hover:shadow-lg hover:-translate-y-1",
+            onClick && "cursor-pointer"
+        )}
+        onClick={() => onClick?.(activity.id)}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-lg font-headline pr-8">{activity.name}</CardTitle>
            {activity.isCustom && (
@@ -67,7 +75,10 @@ export function ActivityCard({ activity, onDelete }: ActivityCardProps) {
                 variant="ghost"
                 size="icon"
                 className="absolute top-2 right-2 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                onClick={() => onDelete(activity.id)}
+                onClick={(e) => {
+                    e.stopPropagation(); // prevent card's onClick
+                    onDelete(activity.id)
+                }}
               >
                 <Trash2 className="h-4 w-4" />
                 <span className="sr-only">Delete activity</span>
