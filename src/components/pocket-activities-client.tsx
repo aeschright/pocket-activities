@@ -84,18 +84,18 @@ export function PocketActivitiesClient() {
       try {
         const [weatherResult, sunriseSunsetResult] = await Promise.all([weatherPromise, sunriseSunsetPromise]);
 
-        if (weatherResult && 'error' in weatherResult) {
+        if ('error' in weatherResult) {
             toast({ variant: "destructive", title: "Weather Error", description: weatherResult.error });
             setWeather(null);
-        } else if (weatherResult) {
-            setWeather(weatherResult as WeatherData);
+        } else {
+            setWeather(weatherResult);
         }
         
-        if (sunriseSunsetResult && 'error' in sunriseSunsetResult) {
+        if ('error' in sunriseSunsetResult) {
             toast({ variant: "destructive", title: "Sunrise/Sunset Error", description: sunriseSunsetResult.error });
             setSunriseSunset(null);
-        } else if (sunriseSunsetResult) {
-            setSunriseSunset(sunriseSunsetResult as SunriseSunsetData);
+        } else {
+            setSunriseSunset(sunriseSunsetResult);
         }
 
       } catch (e: any) {
