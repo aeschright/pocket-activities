@@ -28,6 +28,8 @@ export interface Coords {
   longitude: number;
 }
 
+export type EnergyLevel = "Tired" | "Low Focus" | "Ready to Go" | "High Energy";
+
 
 // AI Flow Types
 
@@ -51,6 +53,7 @@ const GenerateActivitySuggestionsInputSchema = z.object({
     name: z.string(),
     duration: z.number(),
   })).describe('Optional. A single activity to re-evaluate and add a weather tip for.'),
+  energyLevel: z.optional(z.enum(["Tired", "Low Focus", "Ready to Go", "High Energy"])).describe('Optional. The user\'s current energy level.'),
 });
 export type GenerateActivitySuggestionsInput = z.infer<
   typeof GenerateActivitySuggestionsInputSchema

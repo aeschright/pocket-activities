@@ -35,6 +35,7 @@ const GenerateActivitySuggestionsInputSchema = z.object({
     name: z.string(),
     duration: z.number(),
   })).describe('Optional. A single activity to re-evaluate and add a weather tip for.'),
+  energyLevel: z.optional(z.enum(["Tired", "Low Focus", "Ready to Go", "High Energy"])).describe('Optional. The user\'s current energy level.'),
 });
 
 const SuggestionSchema = z.object({
@@ -86,6 +87,14 @@ A user has {{availableTimeMinutes}} minutes free.
 Each suggestion must have a duration that is less than or equal to the available time.
 
 If the available time is over 2 hours (120 minutes), all suggestions provided should be for activities that are at least 60 minutes long.
+
+{{#if energyLevel}}
+The user's energy level is '{{energyLevel}}'. Tailor the suggestions accordingly:
+- If 'Tired', suggest relaxing, low-effort activities (e.g., listen to a podcast, light stretching, watch a short film).
+- If 'Low Focus', suggest activities that don't require much concentration (e.g., go for a casual walk, tidy up a small area, listen to music).
+- If 'Ready to Go', suggest moderate-energy activities (e.g., work on a hobby, do a quick workout, learn something new).
+- If 'High Energy', suggest more physically demanding or engaging activities (e.g., go for a run, tackle a challenging task, do an intense workout).
+{{/if}}
 
 The user has not specified if they need daylight.
 {{#if minutesToSunset}}

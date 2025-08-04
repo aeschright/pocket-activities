@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useTransition, useEffect } from 'react';
-import type { Activity, WeatherData, SunriseSunsetData, Coords } from '@/lib/types';
+import type { Activity, WeatherData, SunriseSunsetData, Coords, EnergyLevel } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { getSuggestionsAction, getWeatherAction, getSunriseSunsetAction } from '@/app/actions';
 
@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CustomActivityForm } from '@/components/custom-activity-form';
 import { ActivityCard } from '@/components/activity-card';
-import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Globe, SunDim, Droplet, AlertTriangle, RefreshCw, Info } from 'lucide-react';
+import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clock, Sun, Globe, SunDim, Droplet, AlertTriangle, RefreshCw, Info, Bolt } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +27,7 @@ export function PocketActivitiesClient() {
   const [time, setTime] = useState(60);
   const [timeUnit, setTimeUnit] = useState('minutes');
   const [daylightNeeded, setDaylightNeeded] = useState(false);
+  const [energyLevel, setEnergyLevel] = useState<EnergyLevel | 'any'>('any');
   const [suggestions, setSuggestions] = useState<Activity[]>([]);
   const [customActivities, setCustomActivities] = useLocalStorage<Activity[]>('custom-activities', []);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -93,6 +94,7 @@ export function PocketActivitiesClient() {
         minutesToSunset: minutesToSunset,
         weather: weatherPayload,
         coords: coords ?? undefined,
+        energyLevel: energyLevel === 'any' ? undefined : energyLevel,
       });
 
       // Find matching custom activities
@@ -347,7 +349,7 @@ export function PocketActivitiesClient() {
           <CardDescription>Adjust the settings below to get activity suggestions.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 items-end gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 items-end gap-6">
             <div className="space-y-2 lg:col-span-2">
               <Label htmlFor="time-input">Available Time</Label>
               <div className="flex space-x-2">
@@ -370,7 +372,22 @@ export function PocketActivitiesClient() {
                 </Select>
               </div>
             </div>
-            <div className="lg:col-span-3">
+             <div className="space-y-2 lg:col-span-2">
+                <Label htmlFor="energy-level">Energy Level</Label>
+                 <Select value={energyLevel} onValueChange={(value) => setEnergyLevel(value as EnergyLevel | 'any')}>
+                  <SelectTrigger id="energy-level">
+                    <SelectValue placeholder="Select energy level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="Tired">Tired</SelectItem>
+                    <SelectItem value="Low Focus">Low Focus</SelectItem>
+                    <SelectItem value="Ready to Go">Ready to Go</SelectItem>
+                    <SelectItem value="High Energy">High Energy</SelectItem>
+                  </SelectContent>
+                </Select>
+            </div>
+            <div className="lg:col-span-4">
               <Button onClick={handleGetSuggestions} disabled={isPending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
                 Suggest Activities
