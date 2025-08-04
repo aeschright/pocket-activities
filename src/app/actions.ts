@@ -28,7 +28,8 @@ export async function getSuggestionsAction(input: GenerateActivitySuggestionsInp
         duration: suggestion.duration,
         isCustom: false,
         daylightNeeded: daylightNeededHeuristic,
-        weatherTip: suggestion.weatherTip,
+        weatherTipShort: suggestion.weatherTipShort,
+        weatherTipLong: suggestion.weatherTipLong,
       }
     });
     return suggestions;

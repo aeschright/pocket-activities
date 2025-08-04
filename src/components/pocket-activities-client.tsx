@@ -402,13 +402,13 @@ export function PocketActivitiesClient() {
                 </div>
              </div>
              
-             {selectedActivity.weatherTip && (
+             {selectedActivity.weatherTipLong && (
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div className="flex items-center text-sm text-accent-foreground border-t border-dashed border-accent/20 pt-3 mt-3">
                                 <Info className="mr-1.5 h-4 w-4 text-accent" />
-                                <span>{selectedActivity.weatherTip}</span>
+                                <span>{selectedActivity.weatherTipLong}</span>
                             </div>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" align="start">

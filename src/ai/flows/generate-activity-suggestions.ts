@@ -9,7 +9,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 import { GenerateActivitySuggestionsInput, GenerateActivitySuggestionsOutput } from '@/lib/types';
 import { isDaylight } from '@/ai/tools/is-daylight';
 
@@ -31,7 +31,8 @@ const GenerateActivitySuggestionsInputSchema = z.object({
 const SuggestionSchema = z.object({
   activity: z.string().describe('The suggested activity.'),
   duration: z.number().describe('The estimated duration of the activity in minutes.'),
-  weatherTip: z.optional(z.string()).describe("A helpful, detailed, and conversational weather-related tip for the activity. For example, 'With a high UV index, it's a good idea to wear sunscreen for this one.' or 'There's a chance of rain, so you might want to bring a raincoat.' Only provide a tip if it is relevant for an outdoor activity.")
+  weatherTipShort: z.optional(z.string()).describe("A brief, helpful weather-related tip for the activity. For example, 'High UV, wear sunscreen.' or 'Chance of rain.' Only provide a tip if it is relevant for an outdoor activity."),
+  weatherTipLong: z.optional(z.string()).describe("A helpful, detailed, and conversational weather-related tip for the activity. For example, 'With a high UV index, it's a good idea to wear sunscreen for this one.' or 'There's a chance of rain, so you might want to bring a raincoat.' Only provide a tip if it is relevant for an outdoor activity.")
 });
 
 const GenerateActivitySuggestionsOutputSchema = z.object({
@@ -69,7 +70,8 @@ You can suggest activities like a day hike (4 hours), gardening (1 hour), or ske
 {{/if}}
 
 {{#if weather}}
-For any outdoor activities suggested, provide a helpful, detailed, and conversational weather-related tip. Activities that require daylight are considered outdoor activities and MUST have a weather tip.
+For any outdoor activities suggested, provide a helpful weather-related tip. Activities that require daylight are considered outdoor activities and MUST have a weather tip.
+Provide two versions of the tip: 'weatherTipShort' (a brief summary, e.g., "High UV, wear sunscreen.") and 'weatherTipLong' (a more detailed, conversational version, e.g., "With a high UV index, it's a good idea to wear sunscreen.").
 - If the UV index is 3 or higher, the tip should be something like "With a high UV index, it's a good idea to wear sunscreen."
 - If the precipitation probability is 20% or higher, the tip should be something like "There's a chance of rain, so bringing a raincoat would be wise."
 - If both conditions are met, you can choose the most relevant tip or combine them.
@@ -80,7 +82,7 @@ Current weather:
 - Chance of Rain (next hour): {{weather.precipitationProbability}}%
 {{/if}}
 
-Return a JSON object with a 'suggestions' key, which is an array of objects. Each object must have 'activity', 'duration', and an optional 'weatherTip' key.
+Return a JSON object with a 'suggestions' key, which is an array of objects. Each object must have 'activity', 'duration', and optional 'weatherTipShort' and 'weatherTipLong' keys.
 Suggest between 3 and 5 activities.`,
 });
 

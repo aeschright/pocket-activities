@@ -54,12 +54,12 @@ export function ActivityCard({ activity, onDelete, onClick }: ActivityCardProps)
               )}
             </div>
           </div>
-          {activity.weatherTip && (
+          {activity.weatherTipShort && (
              <Tooltip>
                 <TooltipTrigger asChild>
                     <div className="flex items-center text-sm text-accent-foreground border-t border-dashed border-accent/20 pt-2">
                         <Info className="mr-1.5 h-4 w-4 text-accent" />
-                        <span>{activity.weatherTip}</span>
+                        <span>{activity.weatherTipShort}</span>
                     </div>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" align="start">
