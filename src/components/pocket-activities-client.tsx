@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition } from 'react';
+import { useState, useMemo, useTransition, useEffect } from 'react';
 import type { Activity, WeatherData } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { getSuggestionsAction, getWeatherAction } from '@/app/actions';
@@ -31,6 +31,12 @@ export function PocketActivitiesClient() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isFetchingWeather, setIsFetchingWeather] = useState(false);
   const { toast } = useToast();
+
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
 
   const [isPending, startTransition] = useTransition();
@@ -88,14 +94,26 @@ export function PocketActivitiesClient() {
 
   const filteredActivities = useMemo(() => {
     const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
+    
+    const allActivities = [...suggestions, ...customActivities];
 
-    const filteredCustom = customActivities.filter(activity =>
-      activity.duration <= timeInMinutes &&
-      (!daylightNeeded || activity.daylightNeeded)
+    if (!hasSearched && customActivities.length === 0) {
+      return [];
+    }
+    
+    if (hasSearched) {
+      return allActivities.filter(activity => 
+        activity.duration <= timeInMinutes &&
+        (!daylightNeeded || activity.daylightNeeded)
+      );
+    }
+    
+    // If we haven't searched, only show custom activities that match
+    return customActivities.filter(activity =>
+        activity.duration <= timeInMinutes &&
+        (!daylightNeeded || activity.daylightNeeded)
     );
-
-    return [...suggestions, ...filteredCustom];
-  }, [time, timeUnit, daylightNeeded, suggestions, customActivities]);
+  }, [time, timeUnit, daylightNeeded, suggestions, customActivities, hasSearched]);
   
   const WeatherDisplay = () => {
     if (isFetchingWeather) {
@@ -201,6 +219,10 @@ export function PocketActivitiesClient() {
       <div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {isPending ? (
+              [...Array(3)].map((_, i) => (
+                <Card key={i}><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
+              ))
+            ) : !isClient ? (
               [...Array(3)].map((_, i) => (
                 <Card key={i}><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
               ))
