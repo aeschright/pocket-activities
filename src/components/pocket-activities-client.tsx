@@ -237,7 +237,8 @@ export function PocketActivitiesClient() {
     if (selectedActivity?.daylightNeeded && !weather && !isFetchingWeather && !locationError) {
       getLocationAndFetchData();
     }
-  }, [selectedActivity, weather, isFetchingWeather, locationError]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedActivity, isFetchingWeather, locationError]);
 
 
   useEffect(() => {
@@ -268,9 +269,10 @@ export function PocketActivitiesClient() {
 
           if (selectedActivity.isCustom) {
             const updatedActivity = { ...selectedActivity, ...updatedTip };
-            // Update the main custom activities list as well to persist the tip
-            setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? updatedActivity : a));
             // This will trigger a re-render because the selectedActivity from the memo will be updated
+            setSelectedCustomActivityId(null); // Deselect to clear and re-select
+            setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? updatedActivity : a));
+            setSelectedCustomActivityId(selectedActivity.id);
           } else {
              const originalSuggestion = suggestions.find(s => s.id === selectedActivity.id);
              if (originalSuggestion) {
@@ -283,7 +285,7 @@ export function PocketActivitiesClient() {
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weather, isFetchingWeather, selectedActivity]);
+  }, [weather, isFetchingWeather]);
 
   useEffect(() => {
     if (sunriseSunset?.sunset) {
@@ -392,12 +394,32 @@ export function PocketActivitiesClient() {
                   </SelectContent>
                 </Select>
             </div>
-            <div className="lg:col-span-4">
+          </div>
+          
+           <div className="grid sm:grid-cols-2 gap-4 border-t pt-6">
               <Button onClick={handleGetSuggestions} disabled={isPending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
                 Suggest Activities
               </Button>
-            </div>
+              <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="w-full justify-center">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add a Custom Activity
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle className="font-headline text-2xl">Create a Custom Activity</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4">
+                    <CustomActivityForm 
+                      onAddActivity={handleAddCustomActivity}
+                      onDone={() => setIsSheetOpen(false)}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
           </div>
 
           {isClient && customActivities.length > 0 && (
@@ -434,25 +456,6 @@ export function PocketActivitiesClient() {
             </div>
           )}
 
-          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="w-full justify-center">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add a Custom Activity
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle className="font-headline text-2xl">Create a Custom Activity</SheetTitle>
-              </SheetHeader>
-              <div className="mt-4">
-                <CustomActivityForm 
-                  onAddActivity={handleAddCustomActivity}
-                  onDone={() => setIsSheetOpen(false)}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
 
           <div className="border-t pt-4 mt-4 flex flex-col sm:flex-row items-center gap-4">
             <Button onClick={getLocationAndFetchData} disabled={isFetchingWeather || isFetchingSunriseSunset} variant="outline">
