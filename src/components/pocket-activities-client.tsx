@@ -69,7 +69,7 @@ export function PocketActivitiesClient() {
       // Fetch Weather
       setIsFetchingWeather(true);
       const weatherResult = await getWeatherAction({ latitude, longitude });
-      if ('error' in weatherResult) {
+      if (weatherResult && 'error' in weatherResult) {
         toast({
           variant: "destructive",
           title: "Weather Error",
@@ -84,7 +84,7 @@ export function PocketActivitiesClient() {
       if (daylightNeeded || selectedCustomActivity?.daylightNeeded) {
         setIsFetchingSunriseSunset(true);
         const sunriseSunsetResult = await getSunriseSunsetAction({ latitude, longitude });
-        if ('error' in sunriseSunsetResult) {
+        if (sunriseSunsetResult && 'error' in sunriseSunsetResult) {
             toast({
                 variant: "destructive",
                 title: "Sunrise/Sunset Error",
@@ -143,6 +143,7 @@ export function PocketActivitiesClient() {
     if (selectedCustomActivity?.daylightNeeded && !sunriseSunset) {
       getLocationAndFetchData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCustomActivity, sunriseSunset]);
 
   useEffect(() => {
