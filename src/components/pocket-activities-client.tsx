@@ -319,10 +319,6 @@ export function PocketActivitiesClient() {
           if (selectedActivity.isCustom) {
             const updatedActivity = { ...selectedActivity, ...updatedTip };
             setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? updatedActivity : a));
-            // To re-trigger the memo, we can't just update state that isn't a direct dependency.
-            // So we briefly deselect and re-select to force an update.
-            setSelectedCustomActivityId(null);
-            setTimeout(() => setSelectedCustomActivityId(selectedActivity.id), 0);
           } else {
              const originalSuggestion = suggestions.find(s => s.id === selectedActivity.id);
              if (originalSuggestion) {
@@ -335,7 +331,7 @@ export function PocketActivitiesClient() {
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weather, isFetchingWeather, selectedActivity]);
+  }, [weather, isFetchingWeather]);
 
   useEffect(() => {
     if (sunriseSunset?.sunset) {
@@ -453,7 +449,7 @@ export function PocketActivitiesClient() {
             </div>
           </div>
           
-           <div className="grid sm:grid-cols-2 gap-4 border-t pt-6">
+          <div className="grid sm:grid-cols-2 gap-4 border-t pt-6">
               <Button onClick={handleGetSuggestions} disabled={isPending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
                 Suggest Activities
@@ -669,5 +665,3 @@ export function PocketActivitiesClient() {
     </div>
   );
 }
-
-    
