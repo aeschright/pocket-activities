@@ -87,13 +87,22 @@ export function PocketActivitiesClient() {
   };
 
   const filteredActivities = useMemo(() => {
-    const allActivities = [...suggestions, ...customActivities];
     const timeInMinutes = timeUnit === 'hours' ? time * 60 : time;
-    return allActivities.filter(activity => 
+    
+    // The AI suggestions are already filtered by the backend based on the prompt.
+    // We only need to filter the custom activities.
+    const filteredCustom = customActivities.filter(activity => 
       activity.duration <= timeInMinutes &&
       (daylightNeeded ? activity.daylightNeeded === true : true)
     );
-  }, [time, timeUnit, daylightNeeded, suggestions, customActivities]);
+
+    // If a search has been performed, combine the AI suggestions with the filtered custom activities.
+    // Otherwise, just show the filtered custom activities.
+    if (hasSearched) {
+      return [...suggestions, ...filteredCustom];
+    }
+    return filteredCustom;
+  }, [time, timeUnit, daylightNeeded, suggestions, customActivities, hasSearched]);
   
   const WeatherDisplay = () => {
     if (isFetchingWeather) {
