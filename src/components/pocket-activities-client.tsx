@@ -246,7 +246,7 @@ export function PocketActivitiesClient() {
       const originalSuggestion = suggestions.find(s => s.id === selectedActivity.id);
       
       // Only refetch if the weather tip could change.
-      if (originalSuggestion && !originalSuggestion.weatherTipLong) {
+      if (originalSuggestion) {
         startRefetchingSuggestion(async () => {
           const weatherPayload = {
             uvIndex: weather.uvIndex,
@@ -266,8 +266,11 @@ export function PocketActivitiesClient() {
 
           // Find a similar activity and update our selected one
           if(result.length > 0) {
-            const updatedSuggestion = result[0];
+            const updatedSuggestion = {...result[0], id: originalSuggestion.id};
             setSelectedSuggestedActivity(updatedSuggestion);
+
+            // Also update the main suggestions list to ensure consistency
+            setSuggestions(prev => prev.map(s => s.id === updatedSuggestion.id ? updatedSuggestion : s));
           }
         });
       }
