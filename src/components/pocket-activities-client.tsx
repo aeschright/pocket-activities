@@ -598,7 +598,7 @@ export function PocketActivitiesClient() {
                             <span>Fetching sunset time...</span>
                          </div>
                     ) : timeToSunset ? (
-                        <p className="text-sm text-accent-foreground font-medium">
+                        <p className="text-sm text-muted-foreground font-medium">
                             Time until sunset: {timeToSunset}
                         </p>
                     ) : sunriseSunset === null && !isFetchingSunriseSunset ? (
