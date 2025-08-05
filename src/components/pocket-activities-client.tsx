@@ -291,8 +291,7 @@ export function PocketActivitiesClient() {
 
 
   useEffect(() => {
-     // If we have a selected activity and new weather data becomes available,
-     // re-fetch the suggestion to get an updated weather tip.
+    if (!isClient) return;
     if (selectedActivity && selectedActivity.daylightNeeded && weather && !isFetchingWeather) {
       startRefetchingSuggestion(async () => {
         const weatherPayload = {
@@ -310,7 +309,7 @@ export function PocketActivitiesClient() {
           weather: weatherPayload,
         });
 
-        if(result.length > 0) {
+        if (result.length > 0 && result[0].weatherTipLong) {
           const updatedTip = {
               weatherTipShort: result[0].weatherTipShort,
               weatherTipLong: result[0].weatherTipLong,
@@ -322,15 +321,21 @@ export function PocketActivitiesClient() {
              setSuggestions(prev => prev.map(s => s.id === updatedSuggestion.id ? updatedSuggestion : s));
            } else if (selectedCustomActivityId && selectedCustomActivityId === selectedActivity.id) {
              const updatedActivity = { ...selectedActivity, ...updatedTip };
+             setSelectedCustomActivityId(null);
              setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? updatedActivity : a));
+             // Use a timeout to re-select the activity after the state has updated.
+             setTimeout(() => setSelectedCustomActivityId(selectedActivity.id), 0);
            }
         }
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weather, isFetchingWeather]);
+  }, [weather, isFetchingWeather, isClient]);
+
 
   useEffect(() => {
+    if (!isClient) return;
+
     if (sunriseSunset?.sunset && sunriseSunset?.sunrise) {
       const updateSunEventTime = () => {
         const now = new Date();
@@ -349,7 +354,6 @@ export function PocketActivitiesClient() {
           } else {
             // This case should be rare, but handles if the clock is off or API data is strange.
             setTimeToSunEvent('New day is dawning!');
-            if (interval) clearInterval(interval);
           }
         }
       };
@@ -360,7 +364,7 @@ export function PocketActivitiesClient() {
     } else {
         setTimeToSunEvent(null);
     }
-  }, [sunriseSunset]);
+  }, [sunriseSunset, isClient]);
 
 
   
@@ -613,7 +617,7 @@ export function PocketActivitiesClient() {
                         <p className="text-sm text-muted-foreground font-medium">
                             {timeToSunEvent}
                         </p>
-                    ) : sunriseSunset === null && !isFetchingSunriseSunset ? (
+                    ) : sunriseSunset === null && !isFetchingSunriseSunset && isClient ? (
                         <p className="text-sm text-muted-foreground">Click "Get My Weather" to fetch sunset/sunrise time.</p>
                     ) : (
                         <p className="text-sm text-muted-foreground">Could not determine sun event time.</p>
@@ -675,4 +679,5 @@ export function PocketActivitiesClient() {
   );
 }
 
+    
     
