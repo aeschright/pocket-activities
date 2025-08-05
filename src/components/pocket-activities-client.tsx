@@ -18,7 +18,7 @@ import { PlusCircle, Zap, Loader2, Sparkles, LocateIcon, Thermometer, Cloud, Clo
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { formatDistanceToNow, differenceInMinutes } from 'date-fns';
+import { formatDistanceToNow, differenceInMinutes, addDays } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { formatDuration } from '@/lib/utils';
 
@@ -47,7 +47,7 @@ export function PocketActivitiesClient() {
   const [selectedCustomActivityId, setSelectedCustomActivityId] = useState<string | null>(null);
   const [selectedSuggestedActivity, setSelectedSuggestedActivity] = useState<Activity | null>(null);
 
-  const [timeToSunset, setTimeToSunset] = useState<string | null>(null);
+  const [timeToSunEvent, setTimeToSunEvent] = useState<string | null>(null);
   const [activityToEdit, setActivityToEdit] = useState<Activity | null>(null);
 
 
@@ -331,22 +331,34 @@ export function PocketActivitiesClient() {
   }, [weather, isFetchingWeather]);
 
   useEffect(() => {
-    if (sunriseSunset?.sunset) {
-      const sunsetDate = new Date(sunriseSunset.sunset);
-      const updateSunset = () => {
-        if (sunsetDate > new Date()) {
-          setTimeToSunset(formatDistanceToNow(sunsetDate, { addSuffix: true }));
+    if (sunriseSunset?.sunset && sunriseSunset?.sunrise) {
+      const updateSunEventTime = () => {
+        const now = new Date();
+        const sunsetDate = new Date(sunriseSunset.sunset);
+  
+        if (now < sunsetDate) {
+          // It's before sunset today, show time to sunset
+          setTimeToSunEvent(`Time until sunset: ${formatDistanceToNow(sunsetDate, { addSuffix: true })}`);
         } else {
-          setTimeToSunset('Sunset has passed.');
-          if(interval) clearInterval(interval);
+          // It's after sunset, find next sunrise.
+          // The sunrise from the API is for today, which is in the past.
+          // So we need to get the sunrise for tomorrow.
+          const tomorrowSunrise = addDays(new Date(sunriseSunset.sunrise), 1);
+          if (now < tomorrowSunrise) {
+            setTimeToSunEvent(`Time until sunrise: ${formatDistanceToNow(tomorrowSunrise, { addSuffix: true })}`);
+          } else {
+            // This case should be rare, but handles if the clock is off or API data is strange.
+            setTimeToSunEvent('New day is dawning!');
+            if (interval) clearInterval(interval);
+          }
         }
       };
 
-      updateSunset();
-      const interval = setInterval(updateSunset, 1000 * 60); // Update every minute
+      updateSunEventTime();
+      const interval = setInterval(updateSunEventTime, 1000 * 60); // Update every minute
       return () => clearInterval(interval);
     } else {
-        setTimeToSunset(null);
+        setTimeToSunEvent(null);
     }
   }, [sunriseSunset]);
 
@@ -565,7 +577,7 @@ export function PocketActivitiesClient() {
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
-                    <span>{selectedActivity.weatherTipLong}</span>
+                    <span className="text-accent">{selectedActivity.weatherTipLong}</span>
                 </div>
              )}
              
@@ -595,16 +607,16 @@ export function PocketActivitiesClient() {
                     {isFetchingSunriseSunset ? (
                          <div className="flex items-center space-x-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Fetching sunset time...</span>
+                            <span>Fetching sun event time...</span>
                          </div>
-                    ) : timeToSunset ? (
+                    ) : timeToSunEvent ? (
                         <p className="text-sm text-muted-foreground font-medium">
-                            Time until sunset: {timeToSunset}
+                            {timeToSunEvent}
                         </p>
                     ) : sunriseSunset === null && !isFetchingSunriseSunset ? (
-                        <p className="text-sm text-muted-foreground">Click "Get My Weather" to fetch sunset time.</p>
+                        <p className="text-sm text-muted-foreground">Click "Get My Weather" to fetch sunset/sunrise time.</p>
                     ) : (
-                        <p className="text-sm text-muted-foreground">Could not determine sunset time.</p>
+                        <p className="text-sm text-muted-foreground">Could not determine sun event time.</p>
                     )
                     }
                 </div>
@@ -662,3 +674,5 @@ export function PocketActivitiesClient() {
     </div>
   );
 }
+
+    
