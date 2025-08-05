@@ -17,6 +17,11 @@ export interface WeatherData {
     forecast: string;
     uvIndex: number;
     precipitationProbability?: number;
+    tomorrow?: {
+        conditions: string;
+        uvIndex: number;
+        precipitationProbability: number;
+    }
 }
 
 export interface SunriseSunsetData {
@@ -91,6 +96,7 @@ export type GetSunriseSunsetOutput = z.infer<typeof GetSunriseSunsetOutputSchema
 const GetWeatherInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
   longitude: z.number().describe('The longitude of the location.'),
+  forecastDays: z.optional(z.number()).describe('The number of days to forecast.'),
 });
 export type GetWeatherInput = z.infer<typeof GetWeatherInputSchema>;
 
@@ -100,5 +106,19 @@ const WeatherDataSchema = z.object({
   forecast: z.string().describe('A short forecast for the next hour.'),
   uvIndex: z.number().describe('The current UV index.'),
   precipitationProbability: z.optional(z.number()).describe('The probability of precipitation in the next hour, as a percentage.'),
+  tomorrow: z.optional(z.object({
+    conditions: z.string(),
+    uvIndex: z.number(),
+    precipitationProbability: z.number(),
+  })).describe('The forecast for tomorrow.'),
 });
 export type GetWeatherOutput = z.infer<typeof WeatherDataSchema>;
+
+const GetTomorrowWeatherTipInputSchema = z.object({
+  activityName: z.string().describe('The name of the activity.'),
+  coords: z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+  }),
+});
+export type GetTomorrowWeatherTipInput = z.infer<typeof GetTomorrowWeatherTipInputSchema>;

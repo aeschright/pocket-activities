@@ -4,7 +4,7 @@
 import { useState, useMemo, useTransition, useEffect, useRef } from 'react';
 import type { Activity, WeatherData, SunriseSunsetData, Coords, EnergyLevel } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { getSuggestionsAction, getWeatherAction, getSunriseSunsetAction } from '@/app/actions';
+import { getSuggestionsAction, getWeatherAction, getSunriseSunsetAction, getTomorrowWeatherTipAction } from '@/app/actions';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +48,7 @@ export function PocketActivitiesClient() {
   const [selectedSuggestedActivity, setSelectedSuggestedActivity] = useState<Activity | null>(null);
 
   const [timeToSunEvent, setTimeToSunEvent] = useState<string | null>(null);
+  const [isNight, setIsNight] = useState(false);
   const [activityToEdit, setActivityToEdit] = useState<Activity | null>(null);
 
 
@@ -290,9 +291,31 @@ export function PocketActivitiesClient() {
   }, [selectedActivity, weather, isFetchingWeather, locationError]);
 
 
+  // Effect to get a weather tip for the selected activity
   useEffect(() => {
-    if (!isClient) return;
-    if (selectedActivity && selectedActivity.daylightNeeded && weather && !isFetchingWeather) {
+    if (!isClient || !selectedActivity) return;
+  
+    // Don't fetch a new tip if one already exists
+    if (selectedActivity.weatherTipLong) return;
+
+    if (selectedActivity.daylightNeeded && isNight && coords) {
+      // It's night, get tomorrow's forecast tip
+      startRefetchingSuggestion(async () => {
+        const result = await getTomorrowWeatherTipAction({
+          activityName: selectedActivity.name,
+          coords: coords,
+        });
+        if (!('error' in result)) {
+          const updatedTip = { weatherTipLong: result.weatherTipLong };
+          if (selectedSuggestedActivity?.id === selectedActivity.id) {
+            setSelectedSuggestedActivity(prev => prev ? { ...prev, ...updatedTip } : null);
+          } else if (selectedCustomActivityId === selectedActivity.id) {
+            setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? { ...a, ...updatedTip } : a));
+          }
+        }
+      });
+    } else if (selectedActivity.daylightNeeded && weather && !isFetchingWeather) {
+      // It's day, get today's forecast tip
       startRefetchingSuggestion(async () => {
         const weatherPayload = {
           uvIndex: weather.uvIndex,
@@ -315,55 +338,49 @@ export function PocketActivitiesClient() {
               weatherTipLong: result[0].weatherTipLong,
           };
           
-           if (selectedSuggestedActivity && selectedSuggestedActivity.id === selectedActivity.id) {
-             const updatedSuggestion = {...selectedSuggestedActivity, ...updatedTip};
-             setSelectedSuggestedActivity(updatedSuggestion);
-             setSuggestions(prev => prev.map(s => s.id === updatedSuggestion.id ? updatedSuggestion : s));
-           } else if (selectedCustomActivityId && selectedCustomActivityId === selectedActivity.id) {
-             const updatedActivity = { ...selectedActivity, ...updatedTip };
-             setSelectedCustomActivityId(null);
-             setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? updatedActivity : a));
-             // Use a timeout to re-select the activity after the state has updated.
-             setTimeout(() => setSelectedCustomActivityId(selectedActivity.id), 0);
+          if (selectedSuggestedActivity?.id === selectedActivity.id) {
+            setSelectedSuggestedActivity(prev => prev ? { ...prev, ...updatedTip } : null);
+           } else if (selectedCustomActivityId === selectedActivity.id) {
+             setCustomActivities(prev => prev.map(a => a.id === selectedActivity.id ? { ...a, ...updatedTip } : a));
            }
         }
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weather, isFetchingWeather, isClient]);
+  }, [selectedActivity, weather, isFetchingWeather, isClient, isNight, coords]);
 
 
   useEffect(() => {
-    if (!isClient) return;
+    if (!isClient || !sunriseSunset) return;
 
-    if (sunriseSunset?.sunset && sunriseSunset?.sunrise) {
-      const updateSunEventTime = () => {
+    const updateSunEventTime = () => {
         const now = new Date();
         const sunsetDate = new Date(sunriseSunset.sunset);
-  
-        if (now < sunsetDate) {
-          // It's before sunset today, show time to sunset
-          setTimeToSunEvent(`Time until sunset: ${formatDistanceToNow(sunsetDate, { addSuffix: true })}`);
-        } else {
-          // It's after sunset, find next sunrise.
-          // The sunrise from the API is for today, which is in the past.
-          // So we need to get the sunrise for tomorrow.
-          const tomorrowSunrise = addDays(new Date(sunriseSunset.sunrise), 1);
-          if (now < tomorrowSunrise) {
+        const sunriseDate = new Date(sunriseSunset.sunrise);
+
+        if (now > sunsetDate) {
+            setIsNight(true);
+            // It's after sunset, find next sunrise.
+            // The sunrise from the API is for today, which is in the past.
+            // So we need to get the sunrise for tomorrow.
+            const tomorrowSunrise = addDays(sunriseDate, 1);
+            if (now < tomorrowSunrise) {
             setTimeToSunEvent(`Time until sunrise: ${formatDistanceToNow(tomorrowSunrise, { addSuffix: true })}`);
-          } else {
+            } else {
             // This case should be rare, but handles if the clock is off or API data is strange.
             setTimeToSunEvent('New day is dawning!');
-          }
+            }
+        } else {
+            setIsNight(false);
+            // It's before sunset today, show time to sunset
+            setTimeToSunEvent(`Time until sunset: ${formatDistanceToNow(sunsetDate, { addSuffix: true })}`);
         }
-      };
+    };
 
-      updateSunEventTime();
-      const interval = setInterval(updateSunEventTime, 1000 * 60); // Update every minute
-      return () => clearInterval(interval);
-    } else {
-        setTimeToSunEvent(null);
-    }
+    updateSunEventTime();
+    const interval = setInterval(updateSunEventTime, 1000 * 60); // Update every minute
+    return () => clearInterval(interval);
+    
   }, [sunriseSunset, isClient]);
 
 
@@ -570,14 +587,14 @@ export function PocketActivitiesClient() {
              </div>
              
              {selectedActivity.weatherTipLong && (
-                <div className="flex items-start text-sm text-accent border-t border-dashed border-accent/20 pt-3 mt-3">
+                <div className="flex items-start text-sm border-t border-dashed border-accent/20 pt-3 mt-3">
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Info className="mr-1.5 h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
                             </TooltipTrigger>
                             <TooltipContent side="bottom" align="start">
-                                <p>Based on current weather conditions.</p>
+                                <p>Based on weather conditions.</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>

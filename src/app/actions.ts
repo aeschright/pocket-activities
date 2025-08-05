@@ -1,7 +1,8 @@
 'use server';
 
 import { generateActivitySuggestions } from '@/ai/flows/generate-activity-suggestions';
-import type { Activity, GenerateActivitySuggestionsInput, GetWeatherInput, GetWeatherOutput, GetSunriseSunsetInput, GetSunriseSunsetOutput } from '@/lib/types';
+import { getTomorrowWeatherTip } from '@/ai/flows/get-tomorrow-weather-tip';
+import type { Activity, GenerateActivitySuggestionsInput, GetWeatherInput, GetWeatherOutput, GetSunriseSunsetInput, GetSunriseSunsetOutput, GetTomorrowWeatherTipInput } from '@/lib/types';
 import { weatherCodeToString } from '@/lib/utils';
 
 export async function getSuggestionsAction(input: GenerateActivitySuggestionsInput): Promise<Activity[]> {
@@ -39,14 +40,26 @@ export async function getSuggestionsAction(input: GenerateActivitySuggestionsInp
   }
 }
 
+export async function getTomorrowWeatherTipAction(input: GetTomorrowWeatherTipInput): Promise<{ weatherTipLong: string } | { error: string }> {
+    try {
+        const result = await getTomorrowWeatherTip(input);
+        return { weatherTipLong: result.weatherTipLong };
+    } catch(error: any) {
+        console.error('Error getting tomorrow weather tip:', error);
+        return { error: error.message || 'Could not retrieve weather tip for tomorrow.' };
+    }
+}
+
 export async function getWeatherAction(input: GetWeatherInput): Promise<GetWeatherOutput | { error: string }> {
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${input.latitude}&longitude=${input.longitude}&current=temperature_2m,weathercode,uv_index&hourly=temperature_2m,weathercode,precipitation_probability&temperature_unit=fahrenheit&timeformat=unixtime&forecast_days=1`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${input.latitude}&longitude=${input.longitude}&current=temperature_2m,weathercode,uv_index&hourly=temperature_2m,weathercode,precipitation_probability,uv_index&daily=weathercode,uv_index_max,precipitation_probability_max&temperature_unit=fahrenheit&timeformat=unixtime&forecast_days=${input.forecastDays || 1}`;
       const response = await fetch(url, { next: { revalidate: 900 } }); // Revalidate every 15 minutes
       if (!response.ok) {
         throw new Error(`Failed to fetch weather data: ${response.statusText}`);
       }
       const data = await response.json();
+
+      // Current weather data
       const weatherCode = data.current.weathercode;
       const conditions = weatherCodeToString(weatherCode);
       const temperature = Math.round(data.current.temperature_2m);
@@ -56,8 +69,6 @@ export async function getWeatherAction(input: GetWeatherInput): Promise<GetWeath
       const now = Math.floor(Date.now() / 1000);
       let precipitationProbability = 0;
       if (data.hourly && data.hourly.time && data.hourly.precipitation_probability) {
-        // Find the index of the current hour in the hourly forecast
-        // The API returns timestamps for the beginning of the hour. We find the closest one in the past.
         const currentHourIndex = data.hourly.time.findIndex((t: number, i: number) => {
             const next_t = data.hourly.time[i+1];
             return now >= t && (next_t ? now < next_t : true);
@@ -67,14 +78,25 @@ export async function getWeatherAction(input: GetWeatherInput): Promise<GetWeath
             precipitationProbability = data.hourly.precipitation_probability[currentHourIndex];
         }
       }
-      
-      return {
+
+      let output: GetWeatherOutput = {
         temperature: temperature,
         conditions: conditions,
         forecast: `The weather will be ${conditions.toLowerCase()} for the next hour.`,
         uvIndex: uvIndex,
         precipitationProbability: precipitationProbability,
       };
+
+      // Tomorrow's forecast data (if requested)
+      if ((input.forecastDays || 1) > 1 && data.daily && data.daily.time.length > 1) {
+        output.tomorrow = {
+            conditions: weatherCodeToString(data.daily.weathercode[1]),
+            uvIndex: Math.round(data.daily.uv_index_max[1]),
+            precipitationProbability: Math.round(data.daily.precipitation_probability_max[1]),
+        }
+      }
+      
+      return output;
     } catch (error: any) {
       console.error("Error fetching from weather API:", error);
       return { error: error.message || "Could not retrieve weather information." };
