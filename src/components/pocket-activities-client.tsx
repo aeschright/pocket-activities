@@ -360,20 +360,15 @@ export function PocketActivitiesClient() {
 
         if (now > sunsetDate) {
             setIsNight(true);
-            // It's after sunset, find next sunrise.
-            // The sunrise from the API is for today, which is in the past.
-            // So we need to get the sunrise for tomorrow.
             const tomorrowSunrise = addDays(sunriseDate, 1);
             if (now < tomorrowSunrise) {
-            setTimeToSunEvent(`Time until sunrise: ${formatDistanceToNow(tomorrowSunrise, { addSuffix: true })}`);
+                setTimeToSunEvent(`Time until sunrise: ${formatDistanceToNow(tomorrowSunrise)}`);
             } else {
-            // This case should be rare, but handles if the clock is off or API data is strange.
-            setTimeToSunEvent('New day is dawning!');
+                setTimeToSunEvent('New day is dawning!');
             }
         } else {
             setIsNight(false);
-            // It's before sunset today, show time to sunset
-            setTimeToSunEvent(`Time until sunset: ${formatDistanceToNow(sunsetDate, { addSuffix: true })}`);
+            setTimeToSunEvent(`Time until sunset: ${formatDistanceToNow(sunsetDate)}`);
         }
     };
 
@@ -695,3 +690,5 @@ export function PocketActivitiesClient() {
     </div>
   );
 }
+
+    
