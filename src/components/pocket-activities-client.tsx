@@ -695,6 +695,3 @@ export function PocketActivitiesClient() {
     </div>
   );
 }
-
-    
-    
