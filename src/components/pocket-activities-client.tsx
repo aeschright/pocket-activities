@@ -152,7 +152,7 @@ export function PocketActivitiesClient() {
     if (slowFetchTimer.current) clearTimeout(slowFetchTimer.current);
     slowFetchTimer.current = setTimeout(() => {
         setIsFetchingSlow(true);
-    }, 15000);
+    }, 5000);
 
 
     navigator.geolocation.getCurrentPosition(async (position) => {
@@ -198,7 +198,10 @@ export function PocketActivitiesClient() {
     }, (error) => {
       if (slowFetchTimer.current) clearTimeout(slowFetchTimer.current);
       setIsFetchingSlow(false);
-      const errorMsg = `Could not get your location: ${error.message}`;
+      let errorMsg = `Could not get your location: ${error.message}`;
+      if (error.code === error.TIMEOUT) {
+        errorMsg = "Could not get your location: The request timed out.";
+      }
       setLocationError(errorMsg);
       toast({
         variant: "destructive",
@@ -207,6 +210,8 @@ export function PocketActivitiesClient() {
       })
       setIsFetchingWeather(false);
       setIsFetchingSunriseSunset(false);
+    }, {
+      timeout: 10000 // 10 seconds
     });
   };
 
@@ -365,10 +370,24 @@ export function PocketActivitiesClient() {
                 setTimeToSunEvent(`Time until sunrise: ${formatDistanceToNow(tomorrowSunrise)}`);
             } else {
                 setTimeToSunEvent('New day is dawning!');
+                // It's past the next sunrise, so we should refetch sunrise/sunset data
+                // This is a simple way to handle date changes. A more robust solution might
+                // be to refetch at a specific time of day (e.g., 3am).
+                 if (coords) {
+                    getSunriseSunsetAction(coords).then(result => {
+                        if (result && !('error' in result)) {
+                            setSunriseSunset(result);
+                        }
+                    });
+                }
             }
         } else {
             setIsNight(false);
-            setTimeToSunEvent(`Time until sunset: ${formatDistanceToNow(sunsetDate)}`);
+            if (now > sunriseDate) {
+              setTimeToSunEvent(`Time until sunset: ${formatDistanceToNow(sunsetDate)}`);
+            } else {
+              setTimeToSunEvent(`Time until sunrise: ${formatDistanceToNow(sunriseDate)}`);
+            }
         }
     };
 
@@ -376,7 +395,7 @@ export function PocketActivitiesClient() {
     const interval = setInterval(updateSunEventTime, 1000 * 60); // Update every minute
     return () => clearInterval(interval);
     
-  }, [sunriseSunset, isClient]);
+  }, [sunriseSunset, isClient, coords]);
 
 
   
@@ -403,7 +422,7 @@ export function PocketActivitiesClient() {
           <div className="space-y-2">
             <Skeleton className="h-4 w-[150px]" />
             <Skeleton className="h-4 w-[200px]" />
-            {isFetchingSlow && <p className="text-sm text-muted-foreground pt-1">Still fetching...</p>}
+            {isFetchingSlow && <p className="text-sm text-muted-foreground pt-1">Fetching location data is taking longer than expected...</p>}
           </div>
         </div>
       );
@@ -691,4 +710,5 @@ export function PocketActivitiesClient() {
   );
 }
 
+    
     
