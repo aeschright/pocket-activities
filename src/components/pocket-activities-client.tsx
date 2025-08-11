@@ -152,7 +152,7 @@ export function PocketActivitiesClient() {
     if (slowFetchTimer.current) clearTimeout(slowFetchTimer.current);
     slowFetchTimer.current = setTimeout(() => {
         setIsFetchingSlow(true);
-    }, 5000);
+    }, 15000);
 
 
     navigator.geolocation.getCurrentPosition(async (position) => {
